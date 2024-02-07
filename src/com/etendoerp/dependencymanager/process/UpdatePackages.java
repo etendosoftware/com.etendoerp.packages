@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
 import org.openbravo.base.session.OBPropertiesProvider;
+import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 import org.openbravo.scheduling.ProcessBundle;
@@ -29,9 +30,9 @@ public class UpdatePackages extends DalBaseProcess {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String LOCATION_HEADER = "Location";
     private static final String BASIC_AUTH_TOKEN = "Basic ";
-    private static final String GITHUB_API_URL = "https://api.github.com/orgs/etendosoftware/packages?package_type=maven&per_page=100&page=";
-    private static final String GITHUB_VERSIONS_API_URL = "https://api.github.com/orgs/etendosoftware/packages/maven/";
-    private static final String GITHUB_POM_URL = "https://maven.pkg.github.com/etendosoftware/etendo_core/";
+    private static final String GITHUB_API_URL = "https://deps.labs.etendo.cloud/api/v1/packages?page=";
+    private static final String GITHUB_VERSIONS_API_URL = "https://deps.labs.etendo.cloud/api/v1/packages/maven/";
+    private static final String GITHUB_POM_URL = "https://deps.labs.etendo.cloud/api/v1/pom/";
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     private static final ObjectMapper objectMapper = new ObjectMapper();
     public static final String GITHUB_USER = "githubUser";
@@ -58,9 +59,12 @@ public class UpdatePackages extends DalBaseProcess {
             if (packages.isEmpty()) {
                 break;
             }
-
             for (Map<String, Object> pkg : packages) {
-                processPackage(pkg);
+                try {
+                    processPackage(pkg);
+                } catch (Exception e) {
+                    log.error("Failed to process package", e);
+                }
             }
         }
     }
@@ -83,6 +87,7 @@ public class UpdatePackages extends DalBaseProcess {
      * @throws Exception
      */
     private void processPackage(Map<String, Object> pkg) throws Exception {
+        log.info("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
         String[] parts = name.split("\\.");
         String group = parts[0] + "." + parts[1];
@@ -149,7 +154,9 @@ public class UpdatePackages extends DalBaseProcess {
 
             String pomUrl = buildPomUrl(group, artifact, versionName);
             String pomXml = fetchPomXml(pomUrl);
-            processPomXml(pomXml, pkgVersion);
+            if(pomXml != null) {
+                processPomXml(pomXml, pkgVersion);
+            }
         }
     }
 
@@ -197,6 +204,10 @@ public class UpdatePackages extends DalBaseProcess {
     private String fetchPomXml(String url) {
         try {
             HttpResponse<String> response = sendHttpRequestWithRedirect(url);
+            if(response.statusCode() != 200) {
+                log.error("Failed to fetch POM XML from {}", url);
+                return null;
+            }
             return response.body();
         } catch (Exception e) {
             log.error("Failed to fetch POM XML from {}", url, e);
@@ -236,7 +247,7 @@ public class UpdatePackages extends DalBaseProcess {
      */
     private void findOrCreatePackageDependency(PackageVersion pkgVersion, String group, String artifact, String version) {
         PackageDependency dep = OBDal.getInstance()
-            .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId and e.depgroup = :group and e.artifact = :artifact and e.version = :version")
+            .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId and e.group = :group and e.artifact = :artifact and e.version = :version")
             .setNamedParameter("packageVersionId", pkgVersion.getId())
             .setNamedParameter("group", group)
             .setNamedParameter("artifact", artifact)
