@@ -49,16 +49,11 @@
         <default/>
         <onCreateDefault/>
       </column>
-      <column name="INSTALLATION_STATUS" primaryKey="false" required="true" type="VARCHAR" size="60" autoIncrement="false">
-        <default><![CDATA[PENDING]]></default>
-        <onCreateDefault/>
-      </column>
       <foreign-key foreignTable="AD_CLIENT" name="ETDEP_DEPENDENCY_AD_CLIENT">
         <reference local="AD_CLIENT_ID" foreign="AD_CLIENT_ID"/>
       </foreign-key>
       <foreign-key foreignTable="AD_ORG" name="ETDEP_DEPENDENCY_AD_ORG">
         <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
       </foreign-key>
-      <check name="ETDEP_DEP_INST_STAT_CHECK"><![CDATA[INSTALLATION_STATUS IN ('PENDING', 'DOWNLOADED', 'INSTALLED')]]></check>
     </table>
   </database>
