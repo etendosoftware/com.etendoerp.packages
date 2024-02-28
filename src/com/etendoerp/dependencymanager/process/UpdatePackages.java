@@ -92,7 +92,7 @@ public class UpdatePackages extends DalBaseProcess {
      * @throws Exception
      */
     private void processPackage(Map<String, Object> pkg) throws Exception {
-        log.info("Processing package: {}", pkg.get(NAME));
+        log.debug("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
 
         if (!isPackageExcluded(name)) {
@@ -107,7 +107,7 @@ public class UpdatePackages extends DalBaseProcess {
                 processPackageVersion(version, res, group, artifact);
             }
         } else {
-            log.info("Skipping excluded package: {}", name);
+            log.debug("Skipping excluded package: {}", name);
         }
     }
 
