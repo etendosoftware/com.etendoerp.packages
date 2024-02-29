@@ -40,7 +40,9 @@ public class UpdatePackages extends DalBaseProcess {
     public static final String NAME = "name";
     public static final String GITHUB_API_URI_VERSIONS = "/versions";
     private String _auth;
-    private static final String EXCLUDED_PACKAGE_PREFIX_ETENDORX = "com.etendorx";
+    private static final List<String> EXCLUDED_PACKAGE_PREFIXES = Arrays.asList(
+        "com.etendorx"
+    );
     private static final List<String> EXCLUDED_PACKAGES = Arrays.asList(
         "com.etendoerp.platform.etendo-core",
         "com.etendoerp.gradleplugin"
@@ -118,7 +120,13 @@ public class UpdatePackages extends DalBaseProcess {
      * @return true if the package is to be excluded, false otherwise.
      */
     private boolean isPackageExcluded(String packageName) {
-        return (packageName.startsWith(EXCLUDED_PACKAGE_PREFIX_ETENDORX)) || EXCLUDED_PACKAGES.contains(packageName);
+        for (String prefix : EXCLUDED_PACKAGE_PREFIXES) {
+            if (packageName.startsWith(prefix)) {
+                return true;
+            }
+        }
+
+        return EXCLUDED_PACKAGES.contains(packageName);
     }
 
     /**
