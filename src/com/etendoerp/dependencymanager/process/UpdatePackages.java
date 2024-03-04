@@ -45,7 +45,8 @@ public class UpdatePackages extends DalBaseProcess {
     );
     private static final List<String> EXCLUDED_PACKAGES = Arrays.asList(
         "com.etendoerp.platform.etendo-core",
-        "com.etendoerp.gradleplugin"
+        "com.etendoerp.gradleplugin",
+        "com.etendoerp.gradleplugin.com.etendoerp.gradleplugin.gradle.plugin"
     );
 
     /**
