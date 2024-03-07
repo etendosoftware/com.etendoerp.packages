@@ -11,6 +11,7 @@ import org.apache.commons.lang.mutable.MutableBoolean;
 import org.codehaus.jettison.json.JSONObject;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
+import com.etendoerp.dependencymanager.data.Package;
 
 import java.util.List;
 
@@ -66,6 +67,21 @@ public class InstallDependency extends Action {
       existingDependency = newDependency;
     }
     OBDal.getInstance().save(existingDependency);
+
+    updateInstalledVersion(group, artifact, version);
+  }
+
+  private void updateInstalledVersion(String group, String artifact, String version) {
+    Package etdepPackage = OBDal.getInstance()
+        .createQuery(Package.class, "where depgroup = :group and artifact = :artifact")
+        .setNamedParameter("group", group)
+        .setNamedParameter("artifact", artifact)
+        .uniqueResult();
+
+    if (etdepPackage != null) {
+      etdepPackage.setInstalledVersion(version);
+      OBDal.getInstance().save(etdepPackage);
+    }
   }
 
   private ActionResult buildSuccessResult() {
