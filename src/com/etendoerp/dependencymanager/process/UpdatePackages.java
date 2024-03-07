@@ -40,6 +40,14 @@ public class UpdatePackages extends DalBaseProcess {
     public static final String NAME = "name";
     public static final String GITHUB_API_URI_VERSIONS = "/versions";
     private String _auth;
+    private static final List<String> EXCLUDED_PACKAGE_PREFIXES = Arrays.asList(
+        "com.etendorx"
+    );
+    private static final List<String> EXCLUDED_PACKAGES = Arrays.asList(
+        "com.etendoerp.platform.etendo-core",
+        "com.etendoerp.gradleplugin",
+        "com.etendoerp.gradleplugin.com.etendoerp.gradleplugin.gradle.plugin"
+    );
 
     /**
      * This method is called when the process is executed.
@@ -87,18 +95,39 @@ public class UpdatePackages extends DalBaseProcess {
      * @throws Exception
      */
     private void processPackage(Map<String, Object> pkg) throws Exception {
-        log.info("Processing package: {}", pkg.get(NAME));
+        log.debug("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
-        String[] parts = name.split("\\.");
-        String group = parts[0] + "." + parts[1];
-        String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
 
-        Package res = findOrCreatePackage(group, artifact);
+        if (!isPackageExcluded(name)) {
+            String[] parts = name.split("\\.");
+            String group = parts[0] + "." + parts[1];
+            String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
 
-        List<Map<String, Object>> versions = fetchPackageVersions(name);
-        for (Map<String, Object> version : versions) {
-            processPackageVersion(version, res, group, artifact);
+            Package res = findOrCreatePackage(group, artifact);
+
+            List<Map<String, Object>> versions = fetchPackageVersions(name);
+            for (Map<String, Object> version : versions) {
+                processPackageVersion(version, res, group, artifact);
+            }
+        } else {
+            log.debug("Skipping excluded package: {}", name);
         }
+    }
+
+    /**
+     * Checks if a given package name or group should be excluded based on its name or prefix.
+     * Excluded packages are not processed or shown in the module management window (core, plugins, or rx packages).
+     * @param packageName The full name of the package to check for exclusion.
+     * @return true if the package is to be excluded, false otherwise.
+     */
+    private boolean isPackageExcluded(String packageName) {
+        for (String prefix : EXCLUDED_PACKAGE_PREFIXES) {
+            if (packageName.startsWith(prefix)) {
+                return true;
+            }
+        }
+
+        return EXCLUDED_PACKAGES.contains(packageName);
     }
 
     /**
