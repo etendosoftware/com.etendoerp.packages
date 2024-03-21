@@ -36,7 +36,7 @@ definitions:
         name: Quality Gate Analysis
         depends: *build-step
         script:
-          - pipe: sonarsource/sonarcloud-quality-gate:0.1.6
+          - pipe: sonarsource/sonarqube-quality-gate:1.1.0
             variables:
               SONAR_TOKEN: ${SONAR_TOKEN}
               SONAR_QUALITY_GATE_TIMEOUT: '5'  # Optional
@@ -59,4 +59,4 @@ pipelines:
       - parallel:
           - step: *make-review
           - step: *build-step
-          - step: *quality-gate
+      - step: *quality-gate
