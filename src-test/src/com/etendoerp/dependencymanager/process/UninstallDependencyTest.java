@@ -26,7 +26,7 @@ import com.etendoerp.dependencymanager.DependencyManagerTestConstants;
 import com.etendoerp.dependencymanager.DependencyManagerTestUtils;
 
 public class UninstallDependencyTest extends WeldBaseTest {
-  public static final List<Object> PARAMS = Arrays.asList(
+  protected static final List<Object> PARAMS = Arrays.asList(
       // ModulePkg, format, expectedResult, expectedMessage
       new Object[]{ DependencyManagerTestConstants.MODULE_JAR_PGK_1, "J", "success", DependencyManagerTestConstants.SUCCESS_MSG_JAR_1 },
       new Object[]{ DependencyManagerTestConstants.MODULE_SOURCE_PKG_1, "S", "success", DependencyManagerTestConstants.SUCCESS_MSG_SOURCE_1 }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
@@ -41,7 +42,7 @@ public class UninstallDependency extends BaseActionHandler {
       log.debug("Deleting dependency from database...");
       Dependency dependency = OBDal.getInstance().get(Dependency.class, jsonContent.get("inpetdepDependencyId"));
       OBDal.getInstance().remove(dependency);
-      if (SOURCE.equals(format) || LOCAL.equals(format)) {
+      if (StringUtils.equals(SOURCE, format) || StringUtils.equals(LOCAL, format)) {
 
         log.debug("Dependency format is '{}', deleting source directory...", format);
         String sourceRootPath = OBPropertiesProvider.getInstance().getOpenbravoProperties().getProperty("source.path");
@@ -58,7 +59,7 @@ public class UninstallDependency extends BaseActionHandler {
       errorMessage.put(MESSAGE, message);
       errorMessage.put("refreshParent", true);
       OBDal.getInstance().flush();
-    } catch (JSONException jsone ) {
+    } catch (JSONException jsone) {
       try {
         JSONObject message = new JSONObject();
         message.put(SEVERITY, "error");
@@ -83,6 +84,8 @@ public class UninstallDependency extends BaseActionHandler {
       } finally {
         OBDal.getInstance().rollbackAndClose();
       }
+    } finally {
+      OBContext.restorePreviousMode();
     }
     return errorMessage;
   }

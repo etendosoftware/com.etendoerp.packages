@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.provider.OBProvider;
@@ -17,6 +18,9 @@ import com.etendoerp.dependencymanager.process.UninstallDependency;
 
 public class DependencyManagerTestUtils {
 
+  private DependencyManagerTestUtils() {
+  }
+
   public static Map<String, Object> generateProcessParameters() {
     Map<String, Object> parameters = new HashMap<>();
 
@@ -28,28 +32,23 @@ public class DependencyManagerTestUtils {
     return parameters;
   }
 
-  public static String generateProcessContent(String modulePkg, String format) {
-    try {
-      String group = DependencyManagerTestConstants.GROUP_COM_ETENDOERP;
-      String artifact = modulePkg.replace(group + ".", "");
-      OBCriteria<Dependency> dependencyCriteria = OBDal.getInstance().createCriteria(Dependency.class);
-      dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_GROUP, group));
-      dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_ARTIFACT, artifact));
-      dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_FORMAT, format));
-      dependencyCriteria.setMaxResults(1);
-      String dependencyId = ((Dependency) dependencyCriteria.uniqueResult()).getId();
+  public static String generateProcessContent(String modulePkg, String format) throws JSONException {
+    String group = DependencyManagerTestConstants.GROUP_COM_ETENDOERP;
+    String artifact = modulePkg.replace(group + ".", "");
+    OBCriteria<Dependency> dependencyCriteria = OBDal.getInstance().createCriteria(Dependency.class);
+    dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_GROUP, group));
+    dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_ARTIFACT, artifact));
+    dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_FORMAT, format));
+    dependencyCriteria.setMaxResults(1);
+    String dependencyId = ((Dependency) dependencyCriteria.uniqueResult()).getId();
 
-      JSONObject content = new JSONObject();
-      content.put("inpdepgroup", group);
-      content.put("inpartifact", artifact);
-      content.put("inpformat", format);
-      content.put("inpetdepDependencyId", dependencyId);
+    JSONObject content = new JSONObject();
+    content.put("inpdepgroup", group);
+    content.put("inpartifact", artifact);
+    content.put("inpformat", format);
+    content.put("inpetdepDependencyId", dependencyId);
 
-      return content.toString();
-    } catch (Exception e) {
-      e.printStackTrace();
-      return null;
-    }
+    return content.toString();
   }
 
   public static void addModule(String moduleJavaPkg, String format) {
@@ -81,6 +80,7 @@ public class DependencyManagerTestUtils {
 
   public static class UninstallDepForTests extends UninstallDependency {
 
+    @Override
     public JSONObject execute(Map<String, Object> parameters, String content) {
       return super.execute(parameters, content);
     }
