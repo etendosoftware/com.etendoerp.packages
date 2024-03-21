@@ -72,6 +72,27 @@
 <!--45FC4C8FC0ED4CDC88AB5025B2748DD4-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
 <!--45FC4C8FC0ED4CDC88AB5025B2748DD4--></AD_ELEMENT>
 
+<!--46E572B5816545AC9C2259E7EAD3B69E--><AD_ELEMENT>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <AD_ELEMENT_ID><![CDATA[46E572B5816545AC9C2259E7EAD3B69E]]></AD_ELEMENT_ID>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <COLUMNNAME><![CDATA[uninstalldependency]]></COLUMNNAME>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <NAME><![CDATA[Uninstall Dependency]]></NAME>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <PRINTNAME><![CDATA[Uninstall Dependency]]></PRINTNAME>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <DESCRIPTION><![CDATA[Uninstall the selected dependency from the environment]]></DESCRIPTION>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <HELP><![CDATA[Depending on the dependency format, the uninstallation will vary:
+* Dependency in JAR format: the process will simply delete the dependency register.
+* Dependency in Source format (downloaded from Module Management window or Local): apart from deleting the dependency, the process will also erase the dependency source folders from the environment.
+This process only deletes the selected module, not its dependencies.]]></HELP>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <PO_HELP><![CDATA[Depending on the dependency format, the uninstallation will vary:
+* Dependency in JAR format: the process will simply delete the dependency register.
+* Dependency in Source format (downloaded from Module Management window or Local): apart from deleting the dependency, the process will also erase the dependency source folders from the environment.
+This process only deletes the selected module, not its dependencies.]]></PO_HELP>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
+<!--46E572B5816545AC9C2259E7EAD3B69E-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
+<!--46E572B5816545AC9C2259E7EAD3B69E--></AD_ELEMENT>
+
 <!--493A11C5DA4E4A6FAF1A896886F0A512--><AD_ELEMENT>
 <!--493A11C5DA4E4A6FAF1A896886F0A512-->  <AD_ELEMENT_ID><![CDATA[493A11C5DA4E4A6FAF1A896886F0A512]]></AD_ELEMENT_ID>
 <!--493A11C5DA4E4A6FAF1A896886F0A512-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
