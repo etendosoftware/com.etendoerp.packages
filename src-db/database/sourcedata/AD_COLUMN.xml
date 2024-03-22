@@ -1601,7 +1601,7 @@
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
-<!--D91BDA93612047D3B8CA82FCAEB81625-->  <NAME><![CDATA[Uninstalldependency]]></NAME>
+<!--D91BDA93612047D3B8CA82FCAEB81625-->  <NAME><![CDATA[Uninstall Dependency]]></NAME>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <DESCRIPTION><![CDATA[Uninstall the selected dependency from the environment]]></DESCRIPTION>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <HELP><![CDATA[Depending on the dependency format, the uninstallation will vary:
 * Dependency in JAR format: the process will simply delete the dependency register.
