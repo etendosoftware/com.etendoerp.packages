@@ -168,7 +168,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
       dependencyInfo.put(STATUS, DELETED);
     } else if (depV1 == null && depV2 != null) {
       dependencyInfo.put(STATUS, NEW_DEPENDENCY);
-    } else if (depV1 != null && depV2 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
+    } else if (depV1 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
       dependencyInfo.put(STATUS, UPDATED);
     } else {
       return null;

@@ -14,8 +14,6 @@ import org.codehaus.jettison.json.JSONObject;
 import org.openbravo.base.session.OBPropertiesProvider;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.etendoerp.dependencymanager.data.Package;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,7 +41,6 @@ public class InstallDependency extends Action {
   private static final ObjectMapper objectMapper = new ObjectMapper();
   public static final String GITHUB_USER = "githubUser";
   public static final String GITHUB_TOKEN = "githubToken";
-  private String _auth;
 
   @Override
   protected ActionResult action(JSONObject parameters, MutableBoolean isStopped) {
@@ -81,10 +78,10 @@ public class InstallDependency extends Action {
     String githubUser = properties.getProperty(GITHUB_USER, "");
     String githubToken = properties.getProperty(GITHUB_TOKEN, "");
 
-    this._auth = BASIC_AUTH_TOKEN + Base64.getEncoder().encodeToString((githubUser + ":" + githubToken).getBytes());
+    String authToken = BASIC_AUTH_TOKEN + Base64.getEncoder().encodeToString((githubUser + ":" + githubToken).getBytes());
     HttpRequest request = HttpRequest.newBuilder()
         .uri(new URI(url))
-        .header(AUTHORIZATION_HEADER, this._auth)
+        .header(AUTHORIZATION_HEADER, authToken)
         .version(HttpClient.Version.HTTP_2)
         .GET()
         .build();
@@ -101,28 +98,21 @@ public class InstallDependency extends Action {
   private String fetchLatestVersion(String group, String artifact) {
     try {
       String packageName = group + "." + artifact;
-      String url = GITHUB_VERSIONS_API_URL + packageName + GITHUB_API_URI_VERSIONS;
-      String responseBody = sendHttpRequest(url);
       List<Map<String, Object>> versions = fetchPackageVersions(packageName);
       if (!versions.isEmpty()) {
         Map<String, Object> lastVersion = versions.get(0);
         return (String) lastVersion.get("name");
       } else {
-        log.debug("No versions found for package: " + packageName);
         return null;
       }
     } catch (Exception e) {
-      e.printStackTrace();
+      log.debug("Error fetching latest version for package: " + group + "." + artifact, e);
       return null;
     }
   }
 
   private String determineVersionStatus(String installedVersion, String latestVersion) {
-    if (installedVersion.compareTo(latestVersion) < 0) {
-      return "UA";
-    } else {
-      return "U";
-    }
+    return StringUtils.equals(installedVersion, latestVersion) ? "U" : "UA";
   }
 
   private synchronized void updateOrCreateDependency(String group, String artifact, String version) {
