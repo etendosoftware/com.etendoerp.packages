@@ -1,4 +1,5 @@
 package com.etendoerp.dependencymanager.util;
+import org.apache.commons.lang.StringUtils;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
@@ -7,6 +8,12 @@ import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 public class DependencyCheckUtil {
+  /**
+   * Private constructor to prevent instantiation.
+   */
+  private DependencyCheckUtil() {
+    throw new IllegalStateException("Utility class");
+  }
   /**
    * Checks the compatibility of a package with the core version.
    *
@@ -54,13 +61,21 @@ public class DependencyCheckUtil {
    * @return true if the version falls within the range, false otherwise.
    */
   private static boolean isCompatible(String versionRange, String versionToCheck) {
-    boolean isLowerInclusive = versionRange.startsWith("[");
-    boolean isUpperInclusive = versionRange.endsWith("]");
+    if (StringUtils.isEmpty(versionRange) || StringUtils.isEmpty(versionToCheck)) {
+      return false;
+    }
+
+    boolean isLowerInclusive = StringUtils.startsWith(versionRange, "[");
+    boolean isUpperInclusive = StringUtils.endsWith(versionRange, "]");
 
     String cleanRange = versionRange.substring(1, versionRange.length() - 1);
-    String[] limits = cleanRange.split(",");
-    String lowerLimit = limits[0].trim();
-    String upperLimit = limits[1].trim();
+    String[] limits = StringUtils.split(cleanRange, ",");
+    if (limits == null || limits.length < 2) {
+      return false;
+    }
+
+    String lowerLimit = StringUtils.trim(limits[0]);
+    String upperLimit = StringUtils.trim(limits[1]);
 
     int lowerComparison = compareVersions(versionToCheck, lowerLimit);
     int upperComparison = compareVersions(versionToCheck, upperLimit);

@@ -23,7 +23,7 @@ public class ChangeVersion extends BaseActionHandler {
       jsonContent = new JSONObject(content);
       JSONObject params = jsonContent.getJSONObject("_params");
       String dependencyId = jsonContent.getString("inpetdepDependencyId");
-      String newVersion = params.getString("version");
+      String newVersionId = params.getString("version");
       OBContext.setAdminMode(true);
 
       Dependency dependency = OBDal.getInstance().get(Dependency.class, dependencyId);
@@ -31,15 +31,15 @@ public class ChangeVersion extends BaseActionHandler {
         throw new JSONException("Dependency not found with ID: " + dependencyId);
       }
 
-      log.debug("Changing version of dependency: {} to version: {}", dependency.getEntityName(), newVersion);
-      dependency.setVersion(OBDal.getInstance().get(PackageVersion.class, newVersion).getVersion());
+      log.debug("Changing version of dependency: {} to version ID: {}", dependency.getEntityName(), newVersionId);
+      dependency.setVersion(OBDal.getInstance().get(PackageVersion.class, newVersionId).getVersion());
 
       OBDal.getInstance().save(dependency);
       OBDal.getInstance().flush();
 
       responseMessage.put("severity", "success");
       responseMessage.put("title", "Version Changed");
-      responseMessage.put("message", "Dependency version successfully updated to " + newVersion);
+      responseMessage.put("message", "Dependency version successfully updated to ID " + newVersionId);
     } catch (JSONException e) {
       log.error("Error processing JSON or updating dependency version", e);
       try {

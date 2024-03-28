@@ -1,13 +1,10 @@
-// Initialize the OB.ETDEP namespace to avoid conflicts and manage version changes
 OB.ETDEP = OB.ETDEP || {};
 OB.ETDEP.ChangeVersion = {};
 
 // Function to handle version changes for dependencies
 OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
-    // Retrieve selected version and current version information
     var selectedVersion = item.form.getValues().version$version;
     var currentVersion = view.parentWindow.view.viewGrid.getSelectedRecord().version;
-    // Retrieve dependency group and artifact information
     var depGroup = view.parentWindow.view.viewGrid.getSelectedRecord().group;
     var artifact = view.parentWindow.view.viewGrid.getSelectedRecord().artifact;
 
@@ -50,7 +47,7 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
             var depsMessages = { 'NEW': [], 'UPDATED': [], 'DELETED': [] };
             if (data.comparison) {
                 data.comparison.forEach(function(dep) {
-                    var message = `<b>${dep.artifact}</b>`; // Start message with the dependency name in bold
+                    var message = `<b>${dep.artifact}</b>`;
                     switch (dep.status) {
                         case '[Deleted]':
                             // Handle deleted dependencies
