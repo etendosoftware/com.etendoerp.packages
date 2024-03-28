@@ -58,13 +58,19 @@ public class SelectorChangeVersion extends BaseActionHandler {
       // Fetch the package based on group and artifact identifiers
       Package depPackage = fetchPackageByGroupAndArtifact(depGroup, artifact);
 
-      // Include the warning to check if the selected version is not compatible with the current core version
-      jsonResponse.put("warning", !DependencyCheckUtil.checkCoreCompatibility(depPackage, updateToVersion));
+      // Check if the selected version is not compatible with the current core version
+      JSONObject compatibilityResult = DependencyCheckUtil.checkCoreCompatibility(depPackage, updateToVersion);
+
+      // Use the compatibility result
+      boolean isCompatible = compatibilityResult.getBoolean("isCompatible");
+      jsonResponse.put("warning", !isCompatible); // Use warning to indicate compatibility issues
+
+      // Optionally include additional compatibility details in the response
+      jsonResponse.put("compatibilityDetails", compatibilityResult);
 
       // Compare the package versions and construct the comparison results
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
       jsonResponse.put("comparison", dependenciesComparison);
-
     } catch (JSONException e) {
       throw new OBException("Error processing JSON or updating dependency version", e);
     } finally {

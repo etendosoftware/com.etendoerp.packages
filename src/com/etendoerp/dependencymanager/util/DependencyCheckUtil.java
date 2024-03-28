@@ -1,5 +1,9 @@
 package com.etendoerp.dependencymanager.util;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
@@ -8,6 +12,8 @@ import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 public class DependencyCheckUtil {
+  private static final Logger log = LogManager.getLogger();
+
   /**
    * Private constructor to prevent instantiation.
    */
@@ -15,25 +21,42 @@ public class DependencyCheckUtil {
     throw new IllegalStateException("Utility class");
   }
   /**
-   * Checks the compatibility of a package with the core version.
+   * Checks the compatibility of a package with the core version and returns a JSONObject with the result.
    *
-   * @param pkg
-   *     The package to check compatibility for.
-   * @param version
-   *     The version of the package being checked.
-   * @return true if the package is compatible with the core version, false otherwise.
+   * @param pkg The package to check compatibility for.
+   * @param version The version of the package being checked.
+   * @return JSONObject with compatibility result and version details.
    */
-  public static boolean checkCoreCompatibility(Package pkg, String version) {
-    PackageVersion pkgVersion = getPackageVersion(pkg, version);
-    // Get the package's core dependency range
-    PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream().filter(
-        t -> t.getArtifact().equals("etendo-core")).findFirst().orElse(null);
-    if (coreDep == null) { // Modules that do not have a core dependency are compatible with any version
-      return true;
+  public static JSONObject checkCoreCompatibility(Package pkg, String version) {
+    JSONObject result = new JSONObject();
+    try {
+      PackageVersion pkgVersion = getPackageVersion(pkg, version);
+      PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream()
+          .filter(dep -> "etendo-core".equals(dep.getArtifact()))
+          .findFirst()
+          .orElse(null);
+
+      String currentCoreVersion = OBDal.getInstance().get(Module.class, "0").getVersion();
+      result.put("currentCoreVersion", currentCoreVersion);
+
+      if (coreDep == null) {
+        result.put("isCompatible", true);
+      } else {
+        String coreVersionRange = coreDep.getVersion();
+        result.put("coreVersionRange", coreVersionRange);
+
+        boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
+        result.put("isCompatible", isCompatible);
+      }
+    } catch (Exception e) {
+      try {
+        result.put("isCompatible", false);
+        result.put("error", "An error occurred: " + e.getMessage());
+      } catch (JSONException jsonEx) {
+        log.debug(jsonEx);
+      }
     }
-    String coreVersionRange = coreDep.getVersion();
-    String currentCoreVersion = OBDal.getInstance().get(Module.class, "0").getVersion();
-    return isCompatible(coreVersionRange, currentCoreVersion);
+    return result;
   }
   /**
    * Retrieves the package version based on the specified package and version.
@@ -69,8 +92,8 @@ public class DependencyCheckUtil {
     boolean isUpperInclusive = StringUtils.endsWith(versionRange, "]");
 
     String cleanRange = "";
-    if (StringUtils.length(versionRange) > 2) {
-      cleanRange = versionRange.substring(1, versionRange.length() - 1);
+    if (StringUtils.isNotEmpty(versionRange) && versionRange.length() > 2) {
+      cleanRange = StringUtils.substring(versionRange, 1, versionRange.length() - 1);
     }
 
     String[] limits = StringUtils.split(cleanRange, ",");

@@ -23,10 +23,13 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
             var messages = []; // Messages to display
             var messageType = 'info'; // Default message type
 
-            // Check for core compatibility warning
             if (data.warning) {
+                var currentCoreVersion = data.compatibilityDetails.currentCoreVersion;
+                var coreVersionRange = data.compatibilityDetails.coreVersionRange;
+                var message = OB.I18N.getLabel("ETDEP_Core_Incompatibility_Warning")
+                message = message.replace("%s", coreVersionRange).replace("%s", currentCoreVersion);
                 messageType = 'warning';
-                messages.push("<li>" + OB.I18N.getLabel("ETDEP_Core_Incompatibility_Warning") + "</li>");
+                messages.push("<li>" + message + "</li>");
             }
 
             // Determine if it's a version upgrade or downgrade
@@ -55,14 +58,18 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
                             break;
                         case '[New Dependency]':
                             // Handle new dependencies with version info
-                            var newDependencyMessage = OB.I18N.getLabel("ETDEP_New_Dependency_To_Version") + " " + dep.version_v2;
+                            var newDependencyMessage = `${OB.I18N.getLabel("ETDEP_New_Dependency_With_Version")} ${dep.version_v2}`;
                             message += ` - ${newDependencyMessage}`;
                             depsMessages['NEW'].push(message);
                             break;
                         case '[Updated]':
-                            // Handle updated dependencies with version info
-                            var updatedMessage = OB.I18N.getLabel("ETDEP_Updated_To_Version") + " " + dep.version_v2;
-                            message += ` - ${updatedMessage}`
+                            var updatedMessage;
+                            if (dep.version_v1 && dep.version_v2) {
+                                updatedMessage = `${OB.I18N.getLabel("ETDEP_Change_From_Version")} ${dep.version_v1} ${OB.I18N.getLabel("ETDEP_To")} ${dep.version_v2}`;
+                            } else {
+                                updatedMessage = `${OB.I18N.getLabel("ETDEP_Change_To_Version")} ${dep.version_v2}`;
+                            }
+                            message += ` - ${updatedMessage}`;
                             depsMessages['UPDATED'].push(message);
                             break;
                     }
@@ -77,7 +84,7 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
                 ['NEW', 'UPDATED', 'DELETED'].forEach(function(key) {
                     if (depsMessages[key].length > 0) {
                         // Use internationalization labels and bold for section titles
-                        var translatedKey = `<b>${OB.I18N.getLabel(`ETDEP_${key}`)}</b>`;
+                        var translatedKey = `<b><u>${OB.I18N.getLabel(`ETDEP_${key}`)}</u></b>`;
                         versionChangeMessage += `<li>${translatedKey}<ul><li>${depsMessages[key].join("</li><li>")}</li></ul></li>`;
                     }
                 });
