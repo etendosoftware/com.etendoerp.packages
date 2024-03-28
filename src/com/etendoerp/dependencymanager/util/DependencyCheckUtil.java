@@ -68,7 +68,11 @@ public class DependencyCheckUtil {
     boolean isLowerInclusive = StringUtils.startsWith(versionRange, "[");
     boolean isUpperInclusive = StringUtils.endsWith(versionRange, "]");
 
-    String cleanRange = versionRange.substring(1, versionRange.length() - 1);
+    String cleanRange = "";
+    if (StringUtils.length(versionRange) > 2) {
+      cleanRange = versionRange.substring(1, versionRange.length() - 1);
+    }
+
     String[] limits = StringUtils.split(cleanRange, ",");
     if (limits == null || limits.length < 2) {
       return false;
