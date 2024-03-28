@@ -12,7 +12,10 @@ import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 public class DependencyCheckUtil {
+  // Constants
   private static final Logger log = LogManager.getLogger();
+  private static final String IS_COMPATIBLE = "isCompatible";
+  private static final String ETENDO_CORE = "etendo-core";
 
   /**
    * Private constructor to prevent instantiation.
@@ -32,7 +35,7 @@ public class DependencyCheckUtil {
     try {
       PackageVersion pkgVersion = getPackageVersion(pkg, version);
       PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream()
-          .filter(dep -> "etendo-core".equals(dep.getArtifact()))
+          .filter(dep -> StringUtils.equals(ETENDO_CORE, dep.getArtifact()))
           .findFirst()
           .orElse(null);
 
@@ -40,17 +43,17 @@ public class DependencyCheckUtil {
       result.put("currentCoreVersion", currentCoreVersion);
 
       if (coreDep == null) {
-        result.put("isCompatible", true);
+        result.put(IS_COMPATIBLE, true); // Use the constant
       } else {
         String coreVersionRange = coreDep.getVersion();
         result.put("coreVersionRange", coreVersionRange);
 
         boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
-        result.put("isCompatible", isCompatible);
+        result.put(IS_COMPATIBLE, isCompatible); // Use the constant
       }
     } catch (Exception e) {
       try {
-        result.put("isCompatible", false);
+        result.put(IS_COMPATIBLE, false); // Use the constant
         result.put("error", "An error occurred: " + e.getMessage());
       } catch (JSONException jsonEx) {
         log.debug(jsonEx);
