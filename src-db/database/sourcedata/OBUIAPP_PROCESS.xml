@@ -40,7 +40,7 @@
 * Dependency in JAR format: the process will simply delete the dependency register.
 * Dependency in Source format (downloaded from Module Management window or Local): apart from deleting the dependency, the process will also erase the dependency source folders from the environment.
 This process only deletes the selected module, not its dependencies.]]></HELP>
-<!--69839B215B1D4876BBD6723819627F7C-->  <ACCESSLEVEL><![CDATA[4]]></ACCESSLEVEL>
+<!--69839B215B1D4876BBD6723819627F7C-->  <ACCESSLEVEL><![CDATA[7]]></ACCESSLEVEL>
 <!--69839B215B1D4876BBD6723819627F7C-->  <CLASSNAME><![CDATA[com.etendoerp.dependencymanager.process.UninstallDependency]]></CLASSNAME>
 <!--69839B215B1D4876BBD6723819627F7C-->  <ISBACKGROUND><![CDATA[N]]></ISBACKGROUND>
 <!--69839B215B1D4876BBD6723819627F7C-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
