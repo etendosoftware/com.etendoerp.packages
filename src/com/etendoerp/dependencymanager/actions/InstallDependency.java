@@ -73,7 +73,7 @@ public class InstallDependency extends Action {
         dependency.getArtifact(), CORE_ARTIFACT);
   }
 
-  private String sendHttpRequest(String url) throws Exception {
+  private static String sendHttpRequest(String url) throws Exception {
     Properties properties = OBPropertiesProvider.getInstance().getOpenbravoProperties();
     String githubUser = properties.getProperty(GITHUB_USER, "");
     String githubToken = properties.getProperty(GITHUB_TOKEN, "");
@@ -89,13 +89,13 @@ public class InstallDependency extends Action {
     return response.body();
   }
 
-  private List<Map<String, Object>> fetchPackageVersions(String packageName) throws Exception {
+  private static List<Map<String, Object>> fetchPackageVersions(String packageName) throws Exception {
     String url = GITHUB_VERSIONS_API_URL + packageName + GITHUB_API_URI_VERSIONS;
     String responseBody = sendHttpRequest(url);
     return objectMapper.readValue(responseBody, new TypeReference<>() {});
   }
 
-  private String fetchLatestVersion(String group, String artifact) {
+  public static String fetchLatestVersion(String group, String artifact) {
     try {
       String packageName = group + "." + artifact;
       List<Map<String, Object>> versions = fetchPackageVersions(packageName);
@@ -111,7 +111,7 @@ public class InstallDependency extends Action {
     }
   }
 
-  private String determineVersionStatus(String installedVersion, String latestVersion) {
+  public static String determineVersionStatus(String installedVersion, String latestVersion) {
     return StringUtils.equals(installedVersion, latestVersion) ? "U" : "UA";
   }
 

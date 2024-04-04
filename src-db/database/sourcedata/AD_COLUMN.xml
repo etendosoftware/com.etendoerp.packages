@@ -1481,7 +1481,16 @@
 <!--B9A71A93AC544C80BE82FC231D4855D2-->  <VALIDATEONNEW><![CDATA[Y]]></VALIDATEONNEW>
 <!--B9A71A93AC544C80BE82FC231D4855D2-->  <IMAGESIZEVALUESACTION><![CDATA[N]]></IMAGESIZEVALUESACTION>
 <!--B9A71A93AC544C80BE82FC231D4855D2-->  <ISUSEDSEQUENCE><![CDATA[N]]></ISUSEDSEQUENCE>
-<!--B9A71A93AC544C80BE82FC231D4855D2-->  <SQLLOGIC><![CDATA[(case when exists(select mod.ad_module_id from ad_module mod where mod.javapackage = dependency0_.depgroup || '.' || dependency0_.artifact limit 1) then 'INSTALLED' else 'PENDING' end)]]></SQLLOGIC>
+<!--B9A71A93AC544C80BE82FC231D4855D2-->  <SQLLOGIC><![CDATA[(case 
+    when exists(
+        select 1
+        from ad_module mod
+        where mod.javapackage = dependency0_.depgroup || '.' || dependency0_.artifact
+          and mod.version = dependency0_.version
+        limit 1
+    ) then 'INSTALLED'
+    else 'PENDING'
+end)]]></SQLLOGIC>
 <!--B9A71A93AC544C80BE82FC231D4855D2-->  <ALLOWSORTING><![CDATA[Y]]></ALLOWSORTING>
 <!--B9A71A93AC544C80BE82FC231D4855D2-->  <ALLOWFILTERING><![CDATA[Y]]></ALLOWFILTERING>
 <!--B9A71A93AC544C80BE82FC231D4855D2-->  <ALLOWED_CROSS_ORG_LINK><![CDATA[N]]></ALLOWED_CROSS_ORG_LINK>
