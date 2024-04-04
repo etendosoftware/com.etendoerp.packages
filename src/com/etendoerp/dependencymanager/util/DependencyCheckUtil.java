@@ -43,17 +43,17 @@ public class DependencyCheckUtil {
       result.put("currentCoreVersion", currentCoreVersion);
 
       if (coreDep == null) {
-        result.put(IS_COMPATIBLE, true); // Use the constant
+        result.put(IS_COMPATIBLE, true);
       } else {
         String coreVersionRange = coreDep.getVersion();
         result.put("coreVersionRange", coreVersionRange);
 
         boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
-        result.put(IS_COMPATIBLE, isCompatible); // Use the constant
+        result.put(IS_COMPATIBLE, isCompatible);
       }
     } catch (Exception e) {
       try {
-        result.put(IS_COMPATIBLE, false); // Use the constant
+        result.put(IS_COMPATIBLE, false);
         result.put("error", "An error occurred: " + e.getMessage());
       } catch (JSONException jsonEx) {
         log.debug(jsonEx);
