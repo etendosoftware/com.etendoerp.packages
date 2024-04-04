@@ -56,7 +56,7 @@ public class DependencyCheckUtil {
         result.put(IS_COMPATIBLE, false);
         result.put("error", "An error occurred: " + e.getMessage());
       } catch (JSONException jsonEx) {
-        log.debug(jsonEx);
+        log.error(jsonEx);
       }
     }
     return result;

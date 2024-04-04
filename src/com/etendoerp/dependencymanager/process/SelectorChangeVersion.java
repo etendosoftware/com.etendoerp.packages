@@ -10,6 +10,7 @@ import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.base.exception.OBException;
+import org.openbravo.erpCommon.utility.OBMessageUtils;
 
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
@@ -72,7 +73,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
       jsonResponse.put("comparison", dependenciesComparison);
     } catch (JSONException e) {
-      throw new OBException("Error processing JSON or updating dependency version", e);
+      throw new OBException(OBMessageUtils.messageBD("ETDEP_Error_Updating_Dependency_Version"), e);
     } finally {
       OBContext.restorePreviousMode();
     }
@@ -130,7 +131,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
         dependencyMap.put(key, dep);
       }
     } else {
-      throw new OBException("Package version not found for version: " + version);
+      throw new OBException(OBMessageUtils.messageBD("ETDEP_Version_Not_Found") + version);
     }
 
     return dependencyMap;

@@ -54,7 +54,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
     } catch (JSONException e) {
       log.error("Error processing JSON or updating dependency version", e);
       return getResponseBuilder()
-          .showMsgInView(ResponseActionsBuilder.MessageType.ERROR, "Error", OBMessageUtils.messageBD("Error updating dependency version"))
+          .showMsgInView(ResponseActionsBuilder.MessageType.ERROR, "Error", OBMessageUtils.messageBD("ETDEP_Error_Updating_Dependency_Version"))
           .build();
     } finally {
       OBContext.restorePreviousMode();

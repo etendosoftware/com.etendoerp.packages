@@ -106,7 +106,7 @@ public class InstallDependency extends Action {
         return null;
       }
     } catch (Exception e) {
-      log.debug("Error fetching latest version for package: " + group + "." + artifact, e);
+      log.error("Error fetching latest version for package: " + group + "." + artifact, e);
       return null;
     }
   }

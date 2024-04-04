@@ -11,10 +11,7 @@
 <!--29E10329A5AF40B68E4FC890F795E178-->  <HELP><![CDATA[* This button will trigger a dropdown menu displaying available versions for the selected dependency.
 * Display a warning to inform the user about potential downgrade issues.
 * Clearly mark any dependencies that need to be added or removed with tags like "New Dependency" or "Deleted".
-* If incompatible, show a warning message to alert the user.
-
-
-]]></HELP>
+* If incompatible, show a warning message to alert the user.]]></HELP>
 <!--29E10329A5AF40B68E4FC890F795E178-->  <ACCESSLEVEL><![CDATA[4]]></ACCESSLEVEL>
 <!--29E10329A5AF40B68E4FC890F795E178-->  <CLASSNAME><![CDATA[com.etendoerp.dependencymanager.process.ChangeVersion]]></CLASSNAME>
 <!--29E10329A5AF40B68E4FC890F795E178-->  <ISBACKGROUND><![CDATA[N]]></ISBACKGROUND>
