@@ -11,7 +11,7 @@ import org.openbravo.model.ad.module.Module;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
-public class DependencyCheckUtil {
+public class PackageUtil {
   // Constants
   private static final Logger log = LogManager.getLogger();
   private static final String IS_COMPATIBLE = "isCompatible";
@@ -20,7 +20,7 @@ public class DependencyCheckUtil {
   /**
    * Private constructor to prevent instantiation.
    */
-  private DependencyCheckUtil() {
+  private PackageUtil() {
     throw new IllegalStateException("Utility class");
   }
   /**

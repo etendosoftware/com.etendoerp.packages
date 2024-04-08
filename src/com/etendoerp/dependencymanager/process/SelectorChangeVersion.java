@@ -15,7 +15,7 @@ import org.openbravo.erpCommon.utility.OBMessageUtils;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
-import com.etendoerp.dependencymanager.util.DependencyCheckUtil;
+import com.etendoerp.dependencymanager.util.PackageUtil;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.util.HashMap;
@@ -60,7 +60,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
       Package depPackage = fetchPackageByGroupAndArtifact(depGroup, artifact);
 
       // Check if the selected version is not compatible with the current core version
-      JSONObject compatibilityResult = DependencyCheckUtil.checkCoreCompatibility(depPackage, updateToVersion);
+      JSONObject compatibilityResult = PackageUtil.checkCoreCompatibility(depPackage, updateToVersion);
 
       // Use the compatibility result
       boolean isCompatible = compatibilityResult.getBoolean("isCompatible");
