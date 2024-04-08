@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
+import org.openbravo.base.exception.OBException;
 import org.openbravo.base.session.OBPropertiesProvider;
-import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 import org.openbravo.scheduling.ProcessBundle;
@@ -39,7 +39,8 @@ public class UpdatePackages extends DalBaseProcess {
     public static final String GITHUB_TOKEN = "githubToken";
     public static final String NAME = "name";
     public static final String GITHUB_API_URI_VERSIONS = "/versions";
-    private String _auth;
+    public static final String VERSION = "version";
+    private String auth;
 
     /**
      * This method is called when the process is executed.
@@ -52,7 +53,7 @@ public class UpdatePackages extends DalBaseProcess {
         String githubUser = properties.getProperty(GITHUB_USER, "");
         String githubToken = properties.getProperty(GITHUB_TOKEN, "");
         // Base64 Basic Auth token
-        this._auth = BASIC_AUTH_TOKEN + Base64.getEncoder().encodeToString((githubUser + ":" + githubToken).getBytes());
+        this.auth = BASIC_AUTH_TOKEN + Base64.getEncoder().encodeToString((githubUser + ":" + githubToken).getBytes());
 
         for (int page = 1; page < 10; page++) {
             List<Map<String, Object>> packages = fetchPackages(page);
@@ -75,10 +76,15 @@ public class UpdatePackages extends DalBaseProcess {
      * @return
      * @throws Exception
      */
-    private List<Map<String, Object>> fetchPackages(int page) throws Exception {
-        String url = GITHUB_API_URL + page;
-        String responseBody = sendHttpRequest(url);
-        return objectMapper.readValue(responseBody, new TypeReference<>() {});
+    private List<Map<String, Object>> fetchPackages(int page) throws OBException {
+        try {
+            String url = GITHUB_API_URL + page;
+            String responseBody = sendHttpRequest(url);
+            return objectMapper.readValue(responseBody, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            throw new OBException("Failed to fetch packages", e);
+        }
     }
 
     /**
@@ -86,7 +92,7 @@ public class UpdatePackages extends DalBaseProcess {
      * @param pkg
      * @throws Exception
      */
-    private void processPackage(Map<String, Object> pkg) throws Exception {
+    private void processPackage(Map<String, Object> pkg) {
         log.info("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
         String[] parts = name.split("\\.");
@@ -130,10 +136,15 @@ public class UpdatePackages extends DalBaseProcess {
      * @return
      * @throws Exception
      */
-    private List<Map<String, Object>> fetchPackageVersions(String packageName) throws Exception {
-        String url = GITHUB_VERSIONS_API_URL + packageName + GITHUB_API_URI_VERSIONS;
-        String responseBody = sendHttpRequest(url);
-        return objectMapper.readValue(responseBody, new TypeReference<>() {});
+    private List<Map<String, Object>> fetchPackageVersions(String packageName) throws OBException {
+        try {
+            String url = GITHUB_VERSIONS_API_URL + packageName + GITHUB_API_URI_VERSIONS;
+            String responseBody = sendHttpRequest(url);
+            return objectMapper.readValue(responseBody, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            throw new OBException("Failed to fetch package versions", e);
+        }
     }
 
     /**
@@ -170,7 +181,7 @@ public class UpdatePackages extends DalBaseProcess {
         PackageVersion pkgVersion = OBDal.getInstance()
             .createQuery(PackageVersion.class, "e where e.package.id = :packageId and e.version = :version")
             .setNamedParameter("packageId", pkg.getId())
-            .setNamedParameter("version", version)
+            .setNamedParameter(VERSION, version)
             .uniqueResult();
 
         if (pkgVersion == null) {
@@ -229,7 +240,7 @@ public class UpdatePackages extends DalBaseProcess {
                 for (Element dependency : dependencies.elements("dependency")) {
                     String groupId = dependency.elementText("groupId");
                     String artifactId = dependency.elementText("artifactId");
-                    String versionDep = dependency.elementText("version");
+                    String versionDep = dependency.elementText(VERSION);
                     findOrCreatePackageDependency(pkgVersion, groupId, artifactId, versionDep);
                 }
             }
@@ -251,7 +262,7 @@ public class UpdatePackages extends DalBaseProcess {
             .setNamedParameter("packageVersionId", pkgVersion.getId())
             .setNamedParameter("group", group)
             .setNamedParameter("artifact", artifact)
-            .setNamedParameter("version", version)
+            .setNamedParameter(VERSION, version)
             .uniqueResult();
 
         if (dep == null) {
@@ -270,15 +281,21 @@ public class UpdatePackages extends DalBaseProcess {
      * @return
      * @throws Exception
      */
-    private String sendHttpRequest(String url) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(new URI(url))
-            .header(AUTHORIZATION_HEADER, this._auth)
-            .version(HttpClient.Version.HTTP_2)
-            .GET()
-            .build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        return response.body();
+    private String sendHttpRequest(String url) throws OBException {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header(AUTHORIZATION_HEADER, this.auth)
+                .version(HttpClient.Version.HTTP_2)
+                .GET()
+                .build();
+            HttpResponse<String> response = httpClient.send(request,
+                HttpResponse.BodyHandlers.ofString());
+            return response.body();
+        } catch (Exception e) {
+            Thread.currentThread().interrupt();
+            throw new OBException("Failed to send HTTP request", e);
+        }
     }
 
     /**
@@ -287,23 +304,28 @@ public class UpdatePackages extends DalBaseProcess {
      * @return
      * @throws Exception
      */
-    private HttpResponse<String> sendHttpRequestWithRedirect(String url) throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(new URI(url))
-            .header(AUTHORIZATION_HEADER, this._auth)
-            .version(HttpClient.Version.HTTP_2)
-            .GET()
-            .build();
-        var response =  httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() == 302) {
-            request = HttpRequest.newBuilder()
-                .uri(new URI(response.headers().firstValue(LOCATION_HEADER).orElseThrow()))
-                .headers(AUTHORIZATION_HEADER, this._auth)
+    private HttpResponse<String> sendHttpRequestWithRedirect(String url) throws OBException {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header(AUTHORIZATION_HEADER, this.auth)
                 .version(HttpClient.Version.HTTP_2)
                 .GET()
                 .build();
-            response =  httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 302) {
+                request = HttpRequest.newBuilder()
+                    .uri(new URI(response.headers().firstValue(LOCATION_HEADER).orElseThrow()))
+                    .headers(AUTHORIZATION_HEADER, this.auth)
+                    .version(HttpClient.Version.HTTP_2)
+                    .GET()
+                    .build();
+                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            }
+            return response;
+        } catch (Exception e) {
+            Thread.currentThread().interrupt();
+            throw new OBException("Failed to send HTTP request with redirect", e);
         }
-        return response;
     }
 }
