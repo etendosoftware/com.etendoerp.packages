@@ -164,7 +164,7 @@
 <!--1212B87692874EC2A45A88025993B8AB-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--1212B87692874EC2A45A88025993B8AB-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--1212B87692874EC2A45A88025993B8AB-->  <NAME><![CDATA[Version Status]]></NAME>
-<!--1212B87692874EC2A45A88025993B8AB-->  <DESCRIPTION><![CDATA[The Version Status Selector is an component of the Dependency Management module, designed to quickly inform users about the status of their software dependencies]]></DESCRIPTION>
+<!--1212B87692874EC2A45A88025993B8AB-->  <DESCRIPTION><![CDATA[The Version Status Selector is a component of the Dependency Management module, designed to quickly inform users about the status of their software dependencies]]></DESCRIPTION>
 <!--1212B87692874EC2A45A88025993B8AB-->  <HELP><![CDATA[Has 3 (three) states:
 - Update Available: Newer version available. Consider updating for improvements.
 - Updated: Dependency is at its latest version. No action needed.
@@ -1703,7 +1703,7 @@ end)]]></SQLLOGIC>
 * Dependency in JAR format: the process will simply delete the dependency register.
 * Dependency in Source format (downloaded from Module Management window or Local): apart from deleting the dependency, the process will also erase the dependency source folders from the environment.
 This process only deletes the selected module, not its dependencies.]]></HELP>
-<!--D91BDA93612047D3B8CA82FCAEB81625-->  <COLUMNNAME><![CDATA[Uninstalldependency]]></COLUMNNAME>
+<!--D91BDA93612047D3B8CA82FCAEB81625-->  <COLUMNNAME><![CDATA[Uninstall Dependency]]></COLUMNNAME>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <AD_TABLE_ID><![CDATA[0DA129A7E8A04EE2AD1325CDC4078636]]></AD_TABLE_ID>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <AD_REFERENCE_ID><![CDATA[28]]></AD_REFERENCE_ID>
 <!--D91BDA93612047D3B8CA82FCAEB81625-->  <FIELDLENGTH><![CDATA[1]]></FIELDLENGTH>

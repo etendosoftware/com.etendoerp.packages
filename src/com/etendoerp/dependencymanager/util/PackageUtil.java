@@ -15,7 +15,7 @@ public class PackageUtil {
   // Constants
   private static final Logger log = LogManager.getLogger();
   private static final String IS_COMPATIBLE = "isCompatible";
-  private static final String ETENDO_CORE = "etendo-core";
+  public static final String ETENDO_CORE = "etendo-core";
 
   /**
    * Private constructor to prevent instantiation.

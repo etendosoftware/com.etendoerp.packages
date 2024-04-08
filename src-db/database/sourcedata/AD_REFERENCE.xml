@@ -30,7 +30,7 @@
 <!--6899C4319EF34329AFCCE11029A92236-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--6899C4319EF34329AFCCE11029A92236-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--6899C4319EF34329AFCCE11029A92236-->  <NAME><![CDATA[Version Status]]></NAME>
-<!--6899C4319EF34329AFCCE11029A92236-->  <DESCRIPTION><![CDATA[The Version Status Selector is an component of the Dependency Management module, designed to quickly inform users about the status of their software dependencies]]></DESCRIPTION>
+<!--6899C4319EF34329AFCCE11029A92236-->  <DESCRIPTION><![CDATA[The Version Status Selector is a component of the Dependency Management module, designed to quickly inform users about the status of their software dependencies]]></DESCRIPTION>
 <!--6899C4319EF34329AFCCE11029A92236-->  <HELP><![CDATA[Has 3 (three) states:
 - Update Available: Newer version available. Consider updating for improvements.
 - Updated: Dependency is at its latest version. No action needed.

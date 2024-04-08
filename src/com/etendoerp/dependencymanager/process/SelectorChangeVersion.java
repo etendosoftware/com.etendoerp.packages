@@ -32,7 +32,6 @@ import java.util.Set;
 @ApplicationScoped
 public class SelectorChangeVersion extends BaseActionHandler {
   // Constants
-  private static final String ETENDO_CORE = "etendo-core";
   private static final String STATUS = "status";
   private static final String DELETED = "[Deleted]";
   private static final String NEW_DEPENDENCY = "[New Dependency]";
@@ -151,7 +150,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
     allKeys.addAll(dependenciesV2.keySet());
 
     for (String key : allKeys) {
-      if (StringUtils.contains(key, ETENDO_CORE)) {
+      if (StringUtils.contains(key, PackageUtil.ETENDO_CORE)) {
         continue;
       }
 

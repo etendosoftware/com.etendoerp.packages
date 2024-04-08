@@ -142,6 +142,8 @@ This process only deletes the selected module, not its dependencies.]]></PO_HELP
 <!--5C560D53FF4448CDB602C62567A26895-->  <COLUMNNAME><![CDATA[update_to]]></COLUMNNAME>
 <!--5C560D53FF4448CDB602C62567A26895-->  <NAME><![CDATA[Update to]]></NAME>
 <!--5C560D53FF4448CDB602C62567A26895-->  <PRINTNAME><![CDATA[Update to]]></PRINTNAME>
+<!--5C560D53FF4448CDB602C62567A26895-->  <DESCRIPTION><![CDATA[Interactive element in the Version Status Selector, allowing users to specify a version for updating their package dependencies]]></DESCRIPTION>
+<!--5C560D53FF4448CDB602C62567A26895-->  <HELP><![CDATA[Choose a version dropdown to upgrade your package dependencies.]]></HELP>
 <!--5C560D53FF4448CDB602C62567A26895-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--5C560D53FF4448CDB602C62567A26895-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
 <!--5C560D53FF4448CDB602C62567A26895--></AD_ELEMENT>
@@ -166,7 +168,7 @@ This process only deletes the selected module, not its dependencies.]]></PO_HELP
 <!--9AB7BDB497C34639884814937B3A2FB7-->  <COLUMNNAME><![CDATA[version_status]]></COLUMNNAME>
 <!--9AB7BDB497C34639884814937B3A2FB7-->  <NAME><![CDATA[Version Status]]></NAME>
 <!--9AB7BDB497C34639884814937B3A2FB7-->  <PRINTNAME><![CDATA[Version Status]]></PRINTNAME>
-<!--9AB7BDB497C34639884814937B3A2FB7-->  <DESCRIPTION><![CDATA[The Version Status Selector is an component of the Dependency Management module, designed to quickly inform users about the status of their software dependencies]]></DESCRIPTION>
+<!--9AB7BDB497C34639884814937B3A2FB7-->  <DESCRIPTION><![CDATA[The Version Status Selector is a component of the Dependency Management module, designed to quickly inform users about the status of their software dependencies]]></DESCRIPTION>
 <!--9AB7BDB497C34639884814937B3A2FB7-->  <HELP><![CDATA[Has 3 (three) states:
 - Update Available: Newer version available. Consider updating for improvements.
 - Updated: Dependency is at its latest version. No action needed.
