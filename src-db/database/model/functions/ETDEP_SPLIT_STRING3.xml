@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ETDEP_SPLIT_STRING3">
+    <function name="ETDEP_SPLIT_STRING3" type="NUMERIC" volatility="STABLE">
+      <parameter name="p_string" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[BEGIN
+  RETURN etdep_split_string(p_string, '.', 3);
+END ETDEP_SPLIT_STRING3
+]]></body>
+    </function>
+  </database>

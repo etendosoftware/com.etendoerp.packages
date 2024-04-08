@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ETDEP_SPLIT_STRING">
+    <function name="ETDEP_SPLIT_STRING" type="NUMERIC" volatility="STABLE">
+      <parameter name="p_string" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_separator" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_position" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[BEGIN
+    --if the string has - ,discard the second part, and recusively call the function with the first part
+    IF p_string LIKE '%-%' THEN
+        RETURN etdep_split_string(split_part(p_string, '-', 1), p_separator, p_position);
+    END IF;
+  RETURN split_part(p_string, p_separator, p_position::integer);
+END ETDEP_SPLIT_STRING
+]]></body>
+    </function>
+  </database>
