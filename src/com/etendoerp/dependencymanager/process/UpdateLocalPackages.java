@@ -1,6 +1,6 @@
 package com.etendoerp.dependencymanager.process;
 
-import com.etendoerp.dependencymanager.utils.UpdateLocalPackagesUtil;
+import com.etendoerp.dependencymanager.util.UpdateLocalPackagesUtil;
 import org.openbravo.scheduling.ProcessBundle;
 import org.openbravo.service.db.DalBaseProcess;
 

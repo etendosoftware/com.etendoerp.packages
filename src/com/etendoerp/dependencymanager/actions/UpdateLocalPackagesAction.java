@@ -1,5 +1,6 @@
 package com.etendoerp.dependencymanager.actions;
 
+import com.etendoerp.dependencymanager.util.UpdateLocalPackagesUtil;
 import com.smf.jobs.Action;
 import com.smf.jobs.ActionResult;
 import com.smf.jobs.Result;
@@ -12,16 +13,14 @@ public class UpdateLocalPackagesAction extends Action {
   protected ActionResult action(JSONObject parameters, MutableBoolean isStopped) {
     var result = new ActionResult();
     try {
-      com.etendoerp.dependencymanager.utils.UpdateLocalPackagesUtil.update();
+      UpdateLocalPackagesUtil.update();
       result.setMessage(OBMessageUtils.messageBD("ETDEP_Package_Update_Success"));
-      // Package update successful
       result.setType(Result.Type.SUCCESS);
     } catch (Exception e) {
       result.setMessage(e.getMessage());
       result.setType(Result.Type.ERROR);
       return result;
     }
-
     return result;
 
   }

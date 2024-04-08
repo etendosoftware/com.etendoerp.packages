@@ -1,10 +1,11 @@
-package com.etendoerp.dependencymanager.utils;
+package com.etendoerp.dependencymanager.util;
 
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 import org.apache.commons.lang.BooleanUtils;
 import org.dom4j.Element;
+import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 
@@ -41,13 +42,14 @@ public class UpdateLocalPackagesUtil {
    * @throws Exception If an error occurs during the execution of the method.
    */
   public static void update() throws IOException {
+    OBContext.setAdminMode(true);
     // download DATASET_FILE_URL
     File dataSetFile = downloadFile(DATASET_FILE_URL);
-    var xmlRootElement = XMLUtil.getInstance()
-        .getRootElement(new FileInputStream(dataSetFile));
+    var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
     processPackages(xmlRootElement);
     processPackageVersions(xmlRootElement);
     processPackageDependencies(xmlRootElement);
+    OBContext.restorePreviousMode();
   }
 
   private static File downloadFile(String fileUrl) throws IOException {
