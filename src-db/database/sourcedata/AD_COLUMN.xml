@@ -1487,7 +1487,6 @@
         from ad_module mod
         where mod.javapackage = dependency0_.depgroup || '.' || dependency0_.artifact
           and mod.version = dependency0_.version
-        limit 1
     ) then 'INSTALLED'
     else 'PENDING'
 end)]]></SQLLOGIC>

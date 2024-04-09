@@ -67,5 +67,8 @@
       <foreign-key foreignTable="AD_ORG" name="ETDEP_DEPENDENCY_AD_ORG">
         <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
       </foreign-key>
+      <check name="ETD_CHK_CV"><![CDATA[CHANGE_VERSION IN ('Y', 'N')]]></check>
+      <check name="ETD_CHK_IA"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
+      <check name="ETD_CHK_UD"><![CDATA[UNINSTALLDEPENDENCY IN ('Y', 'N')]]></check>
     </table>
   </database>
