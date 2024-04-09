@@ -5,11 +5,12 @@ import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
 import org.openbravo.base.session.OBPropertiesProvider;
-import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 import org.openbravo.scheduling.ProcessBundle;
@@ -122,7 +123,7 @@ public class UpdatePackages extends DalBaseProcess {
      */
     private boolean isPackageExcluded(String packageName) {
         for (String prefix : EXCLUDED_PACKAGE_PREFIXES) {
-            if (packageName.startsWith(prefix)) {
+            if (StringUtils.startsWith(packageName, prefix)) {
                 return true;
             }
         }
