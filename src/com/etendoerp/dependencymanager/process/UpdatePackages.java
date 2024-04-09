@@ -89,17 +89,6 @@ public class UpdatePackages extends DalBaseProcess {
         return objectMapper.readValue(responseBody, new TypeReference<>() {});
     }
 
-    private void updateInstalledVersion(Package pkg, String installedVersion) {
-        try {
-            OBContext.setAdminMode(true);
-            pkg.setInstalledVersion(installedVersion);
-            OBDal.getInstance().save(pkg);
-            OBDal.getInstance().flush();
-        } finally {
-            OBContext.restorePreviousMode();
-        }
-    }
-
     /**
      * Processes a package from the GitHub API.
      * @param pkg
