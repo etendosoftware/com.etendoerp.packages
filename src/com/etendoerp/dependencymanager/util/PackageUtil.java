@@ -8,6 +8,9 @@ import org.hibernate.criterion.Restrictions;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.model.ad.module.Module;
+
+import com.etendoerp.dependencymanager.actions.InstallDependency;
+import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
@@ -137,5 +140,39 @@ public class PackageUtil {
       }
     }
     return 0;
+  }
+  /**
+   * Updates an existing dependency or creates a new one if it does not exist.
+   * 
+   * @param group
+   *     The group of the dependency.
+   * @param artifact
+   *     The artifact of the dependency.
+   * @param version
+   *     The version of the dependency.
+   * @return The updated or created Dependency object.
+   */
+  public static synchronized void updateOrCreateDependency(String group, String artifact, String version) {
+    Dependency existingDependency = OBDal.getInstance()
+        .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
+        .setNamedParameter("group", group)
+        .setNamedParameter("artifact", artifact)
+        .uniqueResult();
+
+    String latestVersion = InstallDependency.fetchLatestVersion(group, artifact);
+    String versionStatus = InstallDependency.determineVersionStatus(version, latestVersion);
+
+    if (existingDependency != null) {
+      existingDependency.setVersion(version);
+      existingDependency.setVersionStatus(versionStatus);
+    } else {
+      Dependency newDependency = new Dependency();
+      newDependency.setGroup(group);
+      newDependency.setArtifact(artifact);
+      newDependency.setVersion(version);
+      newDependency.setVersionStatus(versionStatus);
+      existingDependency = newDependency;
+    }
+    OBDal.getInstance().save(existingDependency);
   }
 }

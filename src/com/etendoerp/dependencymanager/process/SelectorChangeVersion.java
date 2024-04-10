@@ -85,7 +85,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
    * @param artifact The package's artifact.
    * @return The matching package, or {@code null} if not found.
    */
-  private Package fetchPackageByGroupAndArtifact(String depGroup, String artifact) {
+  public Package fetchPackageByGroupAndArtifact(String depGroup, String artifact) {
     OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
     packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, depGroup))
         .add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact))
@@ -114,7 +114,8 @@ public class SelectorChangeVersion extends BaseActionHandler {
    * @param version The version of the package.
    * @return A map of the package dependencies.
    */
-  private Map<String, PackageDependency> getDependenciesMap(Package depPackage, String version) {
+  public Map<String, PackageDependency> getDependenciesMap(Package depPackage, String version) {
+    Map<String, PackageDependency> dependencyMap = new HashMap<>();
     OBCriteria<PackageVersion> packageVersionCriteria = OBDal.getInstance()
         .createCriteria(PackageVersion.class)
         .add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, depPackage))
@@ -122,7 +123,6 @@ public class SelectorChangeVersion extends BaseActionHandler {
         .setMaxResults(1);
     PackageVersion packageVersion = (PackageVersion) packageVersionCriteria.uniqueResult();
 
-    Map<String, PackageDependency> dependencyMap = new HashMap<>();
     if (packageVersion != null) {
       List<PackageDependency> dependencies = packageVersion.getETDEPPackageDependencyList();
       for (PackageDependency dep : dependencies) {
