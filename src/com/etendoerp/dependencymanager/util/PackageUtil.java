@@ -161,8 +161,8 @@ public class PackageUtil {
   public static synchronized void updateOrCreateDependency(String group, String artifact, String version) {
     Dependency existingDependency = OBDal.getInstance()
         .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
-        .setNamedParameter("group", group)
-        .setNamedParameter("artifact", artifact)
+        .setNamedParameter(GROUP, group)
+        .setNamedParameter(ARTIFACT, artifact)
         .uniqueResult();
 
     String latestVersion = InstallDependency.fetchLatestVersion(group, artifact);
