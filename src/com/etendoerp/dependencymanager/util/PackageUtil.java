@@ -23,7 +23,6 @@ public class PackageUtil {
   public static final String ARTIFACT = "artifact";
   public static final String STATUS = "status";
   public static final String NEW_DEPENDENCY = "New Dependency";
-  public static final String DELETED = "Deleted";
   public static final String UPDATED = "Updated";
 
   /**
