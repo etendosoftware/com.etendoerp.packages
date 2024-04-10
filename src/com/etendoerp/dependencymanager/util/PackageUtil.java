@@ -1,21 +1,30 @@
 package com.etendoerp.dependencymanager.util;
+
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
+import org.openbravo.base.exception.OBException;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.model.ad.module.Module;
+
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+
 public class PackageUtil {
+  public static final String ETENDO_CORE = "etendo-core";
+  public static final String CURRENT_CORE_VERSION = "currentCoreVersion";
+  public static final String CORE_VERSION_RANGE = "coreVersionRange";
   // Constants
   private static final Logger log = LogManager.getLogger();
   private static final String IS_COMPATIBLE = "isCompatible";
-  public static final String ETENDO_CORE = "etendo-core";
 
   /**
    * Private constructor to prevent instantiation.
@@ -23,30 +32,31 @@ public class PackageUtil {
   private PackageUtil() {
     throw new IllegalStateException("Utility class");
   }
+
   /**
    * Checks the compatibility of a package with the core version and returns a JSONObject with the result.
    *
-   * @param pkg The package to check compatibility for.
-   * @param version The version of the package being checked.
+   * @param pkg
+   *     The package to check compatibility for.
+   * @param version
+   *     The version of the package being checked.
    * @return JSONObject with compatibility result and version details.
    */
   public static JSONObject checkCoreCompatibility(Package pkg, String version) {
     JSONObject result = new JSONObject();
     try {
       PackageVersion pkgVersion = getPackageVersion(pkg, version);
-      PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream()
-          .filter(dep -> StringUtils.equals(ETENDO_CORE, dep.getArtifact()))
-          .findFirst()
-          .orElse(null);
+      PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream().filter(
+          dep -> StringUtils.equals(ETENDO_CORE, dep.getArtifact())).findFirst().orElse(null);
 
       String currentCoreVersion = OBDal.getInstance().get(Module.class, "0").getVersion();
-      result.put("currentCoreVersion", currentCoreVersion);
+      result.put(CURRENT_CORE_VERSION, currentCoreVersion);
 
       if (coreDep == null) {
         result.put(IS_COMPATIBLE, true);
       } else {
         String coreVersionRange = coreDep.getVersion();
-        result.put("coreVersionRange", coreVersionRange);
+        result.put(CORE_VERSION_RANGE, coreVersionRange);
 
         boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
         result.put(IS_COMPATIBLE, isCompatible);
@@ -61,6 +71,7 @@ public class PackageUtil {
     }
     return result;
   }
+
   /**
    * Retrieves the package version based on the specified package and version.
    *
@@ -77,6 +88,7 @@ public class PackageUtil {
     packageVersionCriteria.setMaxResults(1);
     return (PackageVersion) packageVersionCriteria.uniqueResult();
   }
+
   /**
    * Checks if a given version falls within a specified version range.
    *
@@ -115,6 +127,7 @@ public class PackageUtil {
 
     return isAboveLowerLimit && isBelowUpperLimit;
   }
+
   /**
    * Compares two version strings numerically.
    *
@@ -137,5 +150,32 @@ public class PackageUtil {
       }
     }
     return 0;
+  }
+
+  public static String getCoreCompatibleOrLatestVersion(Package pkg) {
+    // Get Package Versions
+    OBCriteria<PackageVersion> versionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    versionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, pkg));
+    List<PackageVersion> pkgVersionList = versionCriteria.list();
+    JSONObject compatibilityInfo;
+
+    // Order by version number (from latest to oldest)
+    pkgVersionList.sort(Collections.reverseOrder((v1, v2) -> compareVersions(v1.getVersion(), v2.getVersion())));
+    PackageVersion latest = pkgVersionList.get(0);
+
+    try {
+      // Cycle through each version found and check for core compatibility. Return version if compatible found
+      for (PackageVersion pkgVersion : pkgVersionList) {
+        compatibilityInfo = checkCoreCompatibility(pkg, pkgVersion.getVersion());
+        if (compatibilityInfo.getBoolean(IS_COMPATIBLE)) {
+          return pkgVersion.getVersion();
+        }
+      }
+    } catch (JSONException e) {
+      throw new OBException(e);
+    }
+
+    // If no version is compatible, return the latest
+    return latest.getVersion();
   }
 }

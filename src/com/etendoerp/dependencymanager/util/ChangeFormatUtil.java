@@ -14,6 +14,8 @@ import org.openbravo.erpCommon.utility.Utility;
 import org.openbravo.service.db.DalConnectionProvider;
 
 public class ChangeFormatUtil {
+  public static final String NEW_FORMAT_PARAM = "newFormat";
+  public static final String FORMAT_KEY_ID = "ID";
   private static final String FORMAT_REFERENCE_ID = "02B96BF686064B44BB33C70C43AEFC05";
 
   private ChangeFormatUtil() {
@@ -26,7 +28,7 @@ public class ChangeFormatUtil {
     List<String> actionList = new ArrayList<>();
 
     for (FieldProvider field : fields) {
-      actionList.add(field.getField("ID"));
+      actionList.add(field.getField(FORMAT_KEY_ID));
     }
 
     return actionList;
@@ -37,7 +39,7 @@ public class ChangeFormatUtil {
     FieldProvider[] comboOptions;
 
     try {
-      ComboTableData comboTableData = new ComboTableData(vars, conn, "LIST", "newFormat",
+      ComboTableData comboTableData = new ComboTableData(vars, conn, "LIST", NEW_FORMAT_PARAM,
           FORMAT_REFERENCE_ID, validationRule,
           Utility.getContext(conn, vars, "#AccessibleOrgTree", ChangeFormatUtil.class.getName()),
           Utility.getContext(conn, vars, "#User_Client", ChangeFormatUtil.class.getName()), 0);
@@ -52,18 +54,18 @@ public class ChangeFormatUtil {
       SQLReturnObject data1 = new SQLReturnObject();
       switch (currentFormat) {
         case DependencyUtil.FORMAT_LOCAL:
-          data1.setData("ID", DependencyUtil.FORMAT_SOURCE);
+          data1.setData(FORMAT_KEY_ID, DependencyUtil.FORMAT_SOURCE);
           dataArray.add(data1);
           data1 = new SQLReturnObject();
-          data1.setData("ID", DependencyUtil.FORMAT_JAR);
+          data1.setData(FORMAT_KEY_ID, DependencyUtil.FORMAT_JAR);
           dataArray.add(data1);
           break;
         case DependencyUtil.FORMAT_SOURCE:
-          data1.setData("ID", DependencyUtil.FORMAT_JAR);
+          data1.setData(FORMAT_KEY_ID, DependencyUtil.FORMAT_JAR);
           dataArray.add(data1);
           break;
         case DependencyUtil.FORMAT_JAR:
-          data1.setData("ID", DependencyUtil.FORMAT_SOURCE);
+          data1.setData(FORMAT_KEY_ID, DependencyUtil.FORMAT_SOURCE);
           dataArray.add(data1);
           break;
         default:
@@ -76,7 +78,7 @@ public class ChangeFormatUtil {
       int ind2 = 0;
       while (ind1 < comboOptions.length && ind2 < dataArray.size()) {
         for (SQLReturnObject sqlro : dataArray) {
-          if (sqlro.getField("ID").equals(comboOptions[ind1].getField("ID"))) {
+          if (sqlro.getField(FORMAT_KEY_ID).equals(comboOptions[ind1].getField(FORMAT_KEY_ID))) {
             data[ind2] = sqlro;
             data[ind2].setData("NAME", comboOptions[ind1].getField("NAME"));
             data[ind2].setData("DESCRIPTION", comboOptions[ind1].getField("DESCRIPTION"));

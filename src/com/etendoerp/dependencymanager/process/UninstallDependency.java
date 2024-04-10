@@ -1,22 +1,20 @@
 package com.etendoerp.dependencymanager.process;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.openbravo.base.session.OBPropertiesProvider;
 import org.openbravo.client.kernel.BaseActionHandler;
 import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
 
 import com.etendoerp.dependencymanager.data.Dependency;
+import com.etendoerp.dependencymanager.util.DependencyUtil;
 
 public class UninstallDependency extends BaseActionHandler {
   public static final String SEVERITY = "severity";
@@ -45,10 +43,7 @@ public class UninstallDependency extends BaseActionHandler {
       if (StringUtils.equals(SOURCE, format) || StringUtils.equals(LOCAL, format)) {
 
         log.debug("Dependency format is '{}', deleting source directory...", format);
-        String sourceRootPath = OBPropertiesProvider.getInstance().getOpenbravoProperties().getProperty("source.path");
-        String sourceDepFilePath = sourceRootPath + "/modules/" + dependencyName;
-        File sourceDepDir = new File(sourceDepFilePath);
-        FileUtils.deleteDirectory(sourceDepDir);
+        DependencyUtil.deleteSourceDependencyDir(dependencyName);
       }
 
       log.debug("Uninstallation successful");
