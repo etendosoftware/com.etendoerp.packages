@@ -40,12 +40,12 @@ public class ChangeVersion extends BaseProcessActionHandler {
 
       Dependency dependency = OBDal.getInstance().get(Dependency.class, dependencyId);
       if (dependency == null) {
-        throw new JSONException("Dependency not found with ID: " + dependencyId);
+        throw new JSONException(OBMessageUtils.messageBD("ETDEP_Package_Version_Not_Found_ID") + dependencyId);
       }
 
       PackageVersion newVersion = OBDal.getInstance().get(PackageVersion.class, newVersionId);
       if (newVersion == null) {
-        throw new JSONException("PackageVersion not found with ID: " + newVersionId);
+        throw new JSONException(OBMessageUtils.messageBD("ETDEP_Dependency_Not_Found_ID") + newVersionId);
       }
 
       log.debug("Changing version of dependency: {} to version ID: {}", dependency.getEntityName(), newVersionId);
@@ -60,23 +60,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
       JSONArray dependenciesComparisonResults = compareDependenciesForChange(dependency.getGroup(),
           dependency.getArtifact(), currentVersion, updateToVersion);
 
-      try {
-        for (int i = 0; i < dependenciesComparisonResults.length(); i++) {
-          JSONObject dependencyInfo = dependenciesComparisonResults.getJSONObject(i);
-          String group = dependencyInfo.getString("group");
-          String artifact = dependencyInfo.getString("artifact");
-          String status = dependencyInfo.optString("status", "");
-
-          if ("New Dependency".equals(status) || "Updated".equals(status)) {
-            String version = dependencyInfo.getString("version_v2"); // Asume que version_v2 es la nueva versión
-            PackageUtil.updateOrCreateDependency(group, artifact, version);
-          } else if ("Deleted".equals(status)) {
-            deleteDependency(group, artifact);
-          }
-        }
-      } catch (JSONException e) {
-        log.debug("Error processing dependencies comparison results", e);
-      }
+      processDependencyChanges(dependenciesComparisonResults);
 
       OBDal.getInstance().save(dependency);
       OBDal.getInstance().flush();
@@ -98,47 +82,66 @@ public class ChangeVersion extends BaseProcessActionHandler {
   private JSONArray compareDependenciesForChange(String depGroup, String artifact, String currentVersion, String updateToVersion) throws JSONException {
     JSONArray result = new JSONArray();
 
-    // Find the package based on group and artifact    Package depPackage = selector.fetchPackageByGroupAndArtifact(depGroup, artifact);
+    Package depPackage = selector.fetchPackageByGroupAndArtifact(depGroup, artifact);
     if (depPackage == null) {
-      throw new OBException("Package not found for group: " + depGroup + " and artifact: " + artifact);
+      throw new OBException(OBMessageUtils.messageBD("ETDEP_Package_Not_Found") + depGroup + "." + artifact);
     }
 
-    // Get dependency maps for current and new versions    Map<String, PackageDependency> dependenciesCurrent = selector.getDependenciesMap(depPackage, currentVersion);
+    Map<String, PackageDependency> dependenciesCurrent = selector.getDependenciesMap(depPackage, currentVersion);
     Map<String, PackageDependency> dependenciesUpdate = selector.getDependenciesMap(depPackage, updateToVersion);
 
-    // Compare dependencies and create JSON object with results
     Set<String> allKeys = new HashSet<>();
     allKeys.addAll(dependenciesCurrent.keySet());
     allKeys.addAll(dependenciesUpdate.keySet());
 
     for (String key : allKeys) {
-      if (StringUtils.contains(key, PackageUtil.ETENDO_CORE)) {
-        continue;
-      }
-
-      JSONObject dependencyInfo = new JSONObject();
-      PackageDependency depV1 = dependenciesCurrent.get(key);
-      PackageDependency depV2 = dependenciesUpdate.get(key);
-
-      dependencyInfo.put("group", key.split(":")[0]);
-      dependencyInfo.put("artifact", key.split(":")[1]);
-      dependencyInfo.put("version_v1", depV1 != null ? depV1.getVersion() : "null");
-      dependencyInfo.put("version_v2", depV2 != null ? depV2.getVersion() : "null");
-
-      if (depV1 != null && depV2 == null) {
-        dependencyInfo.put("status", "Deleted");
-      } else if (depV1 == null && depV2 != null) {
-        dependencyInfo.put("status", "New Dependency");
-      } else if (depV1 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
-        dependencyInfo.put("status", "Updated");
-      } else {
-        continue;
-      }
-
-      result.put(dependencyInfo);
+      if (StringUtils.contains(key, PackageUtil.ETENDO_CORE)) continue;
+      result.put(buildDependencyInfo(dependenciesCurrent, dependenciesUpdate, key));
     }
 
     return result;
+  }
+
+  private JSONObject buildDependencyInfo(Map<String, PackageDependency> dependenciesCurrent, Map<String, PackageDependency> dependenciesUpdate, String key) throws JSONException {
+    JSONObject dependencyInfo = new JSONObject();
+    PackageDependency depV1 = dependenciesCurrent.get(key);
+    PackageDependency depV2 = dependenciesUpdate.get(key);
+
+    String[] parts = key.split(":");
+    dependencyInfo.put("group", parts[0]);
+    dependencyInfo.put("artifact", parts[1]);
+    dependencyInfo.put("version_v1", depV1 != null ? depV1.getVersion() : "null");
+    dependencyInfo.put("version_v2", depV2 != null ? depV2.getVersion() : "null");
+
+    if (depV1 != null && depV2 == null) {
+      dependencyInfo.put("status", "Deleted");
+    } else if (depV1 == null && depV2 != null) {
+      dependencyInfo.put("status", "New Dependency");
+    } else if (depV1 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
+      dependencyInfo.put("status", "Updated");
+    }
+
+    return dependencyInfo;
+  }
+
+  private void processDependencyChanges(JSONArray dependenciesComparisonResults) {
+    try {
+      for (int i = 0; i < dependenciesComparisonResults.length(); i++) {
+        JSONObject dependencyInfo = dependenciesComparisonResults.getJSONObject(i);
+        String group = dependencyInfo.getString(PackageUtil.GROUP);
+        String artifact = dependencyInfo.getString(PackageUtil.ARTIFACT);
+        String status = dependencyInfo.optString(PackageUtil.STATUS, "");
+
+        if (StringUtils.equals(PackageUtil.NEW_DEPENDENCY, status) || StringUtils.equals(PackageUtil.UPDATED, status)) {
+          String version = dependencyInfo.getString("version_v2");
+          PackageUtil.updateOrCreateDependency(group, artifact, version);
+        } else if (StringUtils.equals(PackageUtil.DELETED, status)) {
+          deleteDependency(group, artifact);
+        }
+      }
+    } catch (JSONException e) {
+      log.debug("Error processing dependencies comparison results", e);
+    }
   }
 
   private void deleteDependency(String group, String artifact) {

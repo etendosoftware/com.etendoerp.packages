@@ -19,6 +19,12 @@ public class PackageUtil {
   private static final Logger log = LogManager.getLogger();
   private static final String IS_COMPATIBLE = "isCompatible";
   public static final String ETENDO_CORE = "etendo-core";
+  public static final String GROUP = "group";
+  public static final String ARTIFACT = "artifact";
+  public static final String STATUS = "status";
+  public static final String NEW_DEPENDENCY = "New Dependency";
+  public static final String DELETED = "Deleted";
+  public static final String UPDATED = "Updated";
 
   /**
    * Private constructor to prevent instantiation.
