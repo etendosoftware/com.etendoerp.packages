@@ -16,7 +16,6 @@ import org.openbravo.model.ad.module.Module;
 
 import com.etendoerp.dependencymanager.actions.InstallDependency;
 import com.etendoerp.dependencymanager.data.Dependency;
-
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
@@ -25,8 +24,6 @@ public class PackageUtil {
   public static final String ETENDO_CORE = "etendo-core";
   public static final String CURRENT_CORE_VERSION = "currentCoreVersion";
   public static final String CORE_VERSION_RANGE = "coreVersionRange";
-  // Constants
-  private static final Logger log = LogManager.getLogger();
   public static final String GROUP = "group";
   public static final String ARTIFACT = "artifact";
   public static final String VERSION = "version";
@@ -36,6 +33,8 @@ public class PackageUtil {
   public static final String VERSION_V1 = "version_v1";
   public static final String VERSION_V2 = "version_v2";
   public static final String IS_COMPATIBLE = "isCompatible";
+  // Constants
+  private static final Logger log = LogManager.getLogger();
 
   /**
    * Private constructor to prevent instantiation.
@@ -162,6 +161,7 @@ public class PackageUtil {
     }
     return 0;
   }
+
   /**
    * Updates an existing dependency or creates a new one if it does not exist.
    *

@@ -18,6 +18,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.provider.OBProvider;
 import org.openbravo.base.session.OBPropertiesProvider;
+import org.openbravo.client.application.process.ResponseActionsBuilder;
 import org.openbravo.client.kernel.BaseActionHandler;
 import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBCriteria;
@@ -30,6 +31,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.etendoerp.dependencymanager.data.Dependency;
+import com.etendoerp.dependencymanager.util.DependencyUtil;
 
 public class AddLocalDependencies extends BaseActionHandler {
   private static final Logger log = LogManager.getLogger();
@@ -149,15 +151,15 @@ public class AddLocalDependencies extends BaseActionHandler {
         dependency.setGroup(group);
         dependency.setArtifact(artifact);
         dependency.setVersion(module.getVersion());
-        dependency.setInstallationStatus("INSTALLED");
-        dependency.setFormat("L");
+        dependency.setInstallationStatus(DependencyUtil.STATUS_INSTALLED);
+        dependency.setFormat(DependencyUtil.FORMAT_LOCAL);
         dependency.setInstalledModule(module);
         OBDal.getInstance().save(dependency);
       }
 
       OBDal.getInstance().flush();
       JSONObject message = new JSONObject();
-      message.put("severity", "success");
+      message.put("severity", ResponseActionsBuilder.MessageType.SUCCESS);
       message.put("title", "Success");
       message.put("text",
           String.format(OBMessageUtils.messageBD("ETDEP_Deps_Successfully_Added"), modulesToAdd.size()));
@@ -166,7 +168,7 @@ public class AddLocalDependencies extends BaseActionHandler {
     } catch (JSONException e) {
       JSONObject message = new JSONObject();
       try {
-        message.put("severity", "error");
+        message.put("severity", ResponseActionsBuilder.MessageType.ERROR);
         message.put("title", "Error");
         message.put("text",
             OBMessageUtils.messageBD("ProcessRunError") + DbUtility.getUnderlyingSQLException(e).getMessage());

@@ -7,45 +7,44 @@ OB.ETDEP.ChangeFormat.onLoad = function(view) {
   var selectedRecords = view.parentWindow.view.viewGrid.getSelectedRecords();
   var currentFormat = selectedRecords[0].format;
 
-  OB.RemoteCallManager.call(
-      'com.etendoerp.dependencymanager.defaults.ChangeFormatDefaults',
-      {
-        currentFormat: currentFormat
-      },
-      {
-      },
-      function(response, data, request) {
-        var newFormats = data.newFormats;
-        var currentValues = newFormatField.getValueMap();
-        var newValues = {};
+  // Function to handle the response for setting new format values
+  function handleNewFormatResponse(response, data, request) {
+    var newFormats = data.newFormats;
+    var currentValues = newFormatField.getValueMap();
+    var newValues = {};
 
-        for (i = 0; i < newFormats.length; i++) {
-          var newFormat = newFormats[i];
-          if (currentValues[newFormat]) {
-              newValues[newFormat] = currentValues[newFormat];
-          }
-        }
-
-        newFormatField.setValueMap(newValues);
+    newFormats.forEach(function(newFormat) {
+      if (currentValues[newFormat]) {
+        newValues[newFormat] = currentValues[newFormat];
       }
+    });
+
+    newFormatField.setValueMap(newValues);
+  }
+
+  // Call to update the format options
+  OB.RemoteCallManager.call(
+    'com.etendoerp.dependencymanager.defaults.ChangeFormatDefaults',
+    { currentFormat: currentFormat },
+    {},
+    handleNewFormatResponse
   );
-  if(currentFormat == "L") {
-      OB.RemoteCallManager.call(
-          'com.etendoerp.dependencymanager.process.SelectLatestCompVersions',
-          {
-            records: selectedRecords
-          },
-          {},
-          function(response, data, request) {
-            var msg = data.message;
-            var messageType = 'info';
-            if (data.warning) {
-              messageType = 'warning'
-            }
-            if (msg != null) {
-              view.messageBar.setMessage(messageType, messageType === 'warning' ? 'Warning' : 'Information', msg);
-            }
-          }
-      );
+
+  // Additional call if the current format is 'L'
+  if (currentFormat === 'L') {
+    function handleSelectLatestCompVersionsResponse(response, data, request) {
+      var msg = data.message;
+      var messageType = data.warning ? 'warning' : 'info';
+      if (msg != null) {
+        view.messageBar.setMessage(messageType, messageType.toUpperCase(), msg);
+      }
+    }
+
+    OB.RemoteCallManager.call(
+      'com.etendoerp.dependencymanager.process.SelectLatestCompVersions',
+      { records: selectedRecords },
+      {},
+      handleSelectLatestCompVersionsResponse
+    );
   }
 }

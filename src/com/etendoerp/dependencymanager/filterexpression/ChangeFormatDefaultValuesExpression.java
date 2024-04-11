@@ -2,6 +2,7 @@ package com.etendoerp.dependencymanager.filterexpression;
 
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.openbravo.base.exception.OBException;
@@ -15,7 +16,7 @@ public class ChangeFormatDefaultValuesExpression implements FilterExpression {
     String currentParam = requestMap.get("currentParam");
     try {
       JSONObject context = new JSONObject(requestMap.get("context"));
-      if (currentParam != null && currentParam.equals("newFormat")) {
+      if (currentParam != null && StringUtils.equals(currentParam, "newFormat")) {
         switch (context.getString("inpformat")) {
           case DependencyUtil.FORMAT_SOURCE:
             return DependencyUtil.FORMAT_JAR;

@@ -8,6 +8,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.exception.OBException;
+import org.openbravo.client.application.process.ResponseActionsBuilder;
 import org.openbravo.client.kernel.BaseActionHandler;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
@@ -45,9 +46,9 @@ public class SelectLatestCompVersions extends BaseActionHandler {
       String msgWithNoUpdates = OBMessageUtils.messageBD("ETDEP_Dependency_Update_Info") + "<ul></ul>";
       message.append("<ul>");
       for (int i = 0; i < selectedRecords.length(); i++) {
-        String group = ((JSONObject) selectedRecords.get(i)).getString("group");
-        String artifact = ((JSONObject) selectedRecords.get(i)).getString("artifact");
-        String currentVersion = ((JSONObject) selectedRecords.get(i)).getString("version");
+        String group = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.GROUP);
+        String artifact = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.ARTIFACT);
+        String currentVersion = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.VERSION);
         String depName = group + "." + artifact;
 
         OBCriteria<Package> depPkgCriteria = OBDal.getInstance().createCriteria(Package.class);
@@ -76,7 +77,7 @@ public class SelectLatestCompVersions extends BaseActionHandler {
       }
       String strMessage = message.toString();
       if (!StringUtils.equals(strMessage, msgWithNoUpdates)) {
-        jsonResponse.put("warning", warning);
+        jsonResponse.put(String.valueOf(ResponseActionsBuilder.MessageType.WARNING), warning);
         jsonResponse.put("message", strMessage);
       }
     } catch (JSONException e) {

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang.StringUtils;
 import org.openbravo.base.secureApp.VariablesSecureApp;
 import org.openbravo.data.FieldProvider;
 import org.openbravo.database.ConnectionProvider;
@@ -78,7 +79,7 @@ public class ChangeFormatUtil {
       int ind2 = 0;
       while (ind1 < comboOptions.length && ind2 < dataArray.size()) {
         for (SQLReturnObject sqlro : dataArray) {
-          if (sqlro.getField(FORMAT_KEY_ID).equals(comboOptions[ind1].getField(FORMAT_KEY_ID))) {
+          if (StringUtils.equals(sqlro.getField(FORMAT_KEY_ID), comboOptions[ind1].getField(FORMAT_KEY_ID))) {
             data[ind2] = sqlro;
             data[ind2].setData("NAME", comboOptions[ind1].getField("NAME"));
             data[ind2].setData("DESCRIPTION", comboOptions[ind1].getField("DESCRIPTION"));
