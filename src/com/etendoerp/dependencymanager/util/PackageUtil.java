@@ -24,7 +24,7 @@ public class PackageUtil {
   public static final String CORE_VERSION_RANGE = "coreVersionRange";
   // Constants
   private static final Logger log = LogManager.getLogger();
-  private static final String IS_COMPATIBLE = "isCompatible";
+  public static final String IS_COMPATIBLE = "isCompatible";
 
   /**
    * Private constructor to prevent instantiation.

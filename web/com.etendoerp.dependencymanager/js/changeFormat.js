@@ -28,6 +28,24 @@ OB.ETDEP.ChangeFormat.onLoad = function(view) {
 
         newFormatField.setValueMap(newValues);
       }
-    );
-
+  );
+  if(currentFormat == "L") {
+      OB.RemoteCallManager.call(
+          'com.etendoerp.dependencymanager.process.SelectLatestCompVersions',
+          {
+            records: selectedRecords
+          },
+          {},
+          function(response, data, request) {
+            var msg = data.message;
+            var messageType = 'info';
+            if (data.warning) {
+              messageType = 'warning'
+            }
+            if (msg != null) {
+              view.messageBar.setMessage(messageType, messageType === 'warning' ? 'Warning' : 'Information', msg);
+            }
+          }
+      );
+  }
 }
