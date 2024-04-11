@@ -33,7 +33,6 @@ import java.util.Set;
 public class SelectorChangeVersion extends BaseActionHandler {
   // Constants
   private static final String STATUS = "status";
-  private static final String DELETED = "[Deleted]";
   private static final String NEW_DEPENDENCY = "[New Dependency]";
   private static final String UPDATED = "[Updated]";
 
@@ -49,7 +48,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
     try {
       JSONObject jsonContent = new JSONObject(content);
       String depGroup = jsonContent.optString("depGroup");
-      String artifact = jsonContent.optString("artifact");
+      String artifact = jsonContent.optString(PackageUtil.ARTIFACT);
       String updateToVersion = jsonContent.optString("updateToVersion");
       String currentVersion = jsonContent.optString("currentVersion");
 
@@ -85,7 +84,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
    * @param artifact The package's artifact.
    * @return The matching package, or {@code null} if not found.
    */
-  private Package fetchPackageByGroupAndArtifact(String depGroup, String artifact) {
+  public Package fetchPackageByGroupAndArtifact(String depGroup, String artifact) {
     OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
     packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, depGroup))
         .add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact))
@@ -94,7 +93,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
   }
 
   /**
-   * Compares the package versions and lists dependencies that are new, deleted, or updated.
+   * Compares the package versions and lists dependencies that are new or updated.
    * @param depPackage The package whose versions are to be compared.
    * @param currentVersion The current version of the package.
    * @param updateToVersion The target version to update to.
@@ -114,7 +113,8 @@ public class SelectorChangeVersion extends BaseActionHandler {
    * @param version The version of the package.
    * @return A map of the package dependencies.
    */
-  private Map<String, PackageDependency> getDependenciesMap(Package depPackage, String version) {
+  public Map<String, PackageDependency> getDependenciesMap(Package depPackage, String version) {
+    Map<String, PackageDependency> dependencyMap = new HashMap<>();
     OBCriteria<PackageVersion> packageVersionCriteria = OBDal.getInstance()
         .createCriteria(PackageVersion.class)
         .add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, depPackage))
@@ -122,7 +122,6 @@ public class SelectorChangeVersion extends BaseActionHandler {
         .setMaxResults(1);
     PackageVersion packageVersion = (PackageVersion) packageVersionCriteria.uniqueResult();
 
-    Map<String, PackageDependency> dependencyMap = new HashMap<>();
     if (packageVersion != null) {
       List<PackageDependency> dependencies = packageVersion.getETDEPPackageDependencyList();
       for (PackageDependency dep : dependencies) {
@@ -137,7 +136,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
   }
 
   /**
-   * Compares two sets of dependencies to determine which are new, deleted, or updated.
+   * Compares two sets of dependencies to determine which are new or updated.
    * @param dependenciesV1 The dependencies of the current version.
    * @param dependenciesV2 The dependencies of the updated version.
    * @return A JSONArray containing the comparison results.
@@ -165,16 +164,14 @@ public class SelectorChangeVersion extends BaseActionHandler {
 
   private JSONObject buildDependencyInfo(String key, PackageDependency depV1, PackageDependency depV2) throws JSONException {
     JSONObject dependencyInfo = new JSONObject();
-    dependencyInfo.put("group", key.split(":")[0]);
-    dependencyInfo.put("artifact", key.split(":")[1]);
-    dependencyInfo.put("version_v1", depV1 != null ? depV1.getVersion() : "null");
-    dependencyInfo.put("version_v2", depV2 != null ? depV2.getVersion() : "null");
+    dependencyInfo.put(PackageUtil.GROUP, key.split(":")[0]);
+    dependencyInfo.put(PackageUtil.ARTIFACT, key.split(":")[1]);
+    dependencyInfo.put(PackageUtil.VERSION_V1, depV1 != null ? depV1.getVersion() : "");
+    dependencyInfo.put(PackageUtil.VERSION_V2, depV2 != null ? depV2.getVersion() : "");
 
-    if (depV1 != null && depV2 == null) {
-      dependencyInfo.put(STATUS, DELETED);
-    } else if (depV1 == null && depV2 != null) {
+    if (depV1 == null && depV2 != null) {
       dependencyInfo.put(STATUS, NEW_DEPENDENCY);
-    } else if (depV1 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
+    } else if (depV1 != null && depV2 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
       dependencyInfo.put(STATUS, UPDATED);
     } else {
       return null;

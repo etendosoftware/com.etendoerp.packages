@@ -46,54 +46,12 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
                 messages.push("<li>" + OB.I18N.getLabel("ETDEP_Dependency_Changes") + "</li>");
             }
 
-            // Categorize dependency messages by NEW, UPDATED, DELETED
-            var depsMessages = { 'NEW': [], 'UPDATED': [], 'DELETED': [] };
-            if (data.comparison) {
-                data.comparison.forEach(function(dep) {
-                    var message = `<b>${dep.artifact}</b>`;
-                    switch (dep.status) {
-                        case '[Deleted]':
-                            // Handle deleted dependencies
-                            depsMessages['DELETED'].push(message);
-                            break;
-                        case '[New Dependency]':
-                            // Handle new dependencies with version info
-                            var newDependencyMessage = `${OB.I18N.getLabel("ETDEP_New_Dependency_With_Version")} ${dep.version_v2}`;
-                            message += ` - ${newDependencyMessage}`;
-                            depsMessages['NEW'].push(message);
-                            break;
-                        case '[Updated]':
-                            var updatedMessage;
-                            if (dep.version_v1 && dep.version_v2) {
-                                updatedMessage = `${OB.I18N.getLabel("ETDEP_Change_From_Version")} ${dep.version_v1} ${OB.I18N.getLabel("ETDEP_To")} ${dep.version_v2}`;
-                            } else {
-                                updatedMessage = `${OB.I18N.getLabel("ETDEP_Change_To_Version")} ${dep.version_v2}`;
-                            }
-                            message += ` - ${updatedMessage}`;
-                            depsMessages['UPDATED'].push(message);
-                            break;
-                    }
-                });
+            // Categorize dependency messages by NEW or UPDATED
+            var depsMessages = processDependencyMessages(data.comparison);
+            if (depsMessages) {
+                messages.push(depsMessages);
             }
 
-            // Check for any changes to include an intro message
-            if (depsMessages['NEW'].length > 0 || depsMessages['UPDATED'].length > 0 || depsMessages['DELETED'].length > 0) {
-                versionChangeMessage = `<ul>`;
-
-                // Add each type of change as a subsection
-                ['NEW', 'UPDATED', 'DELETED'].forEach(function(key) {
-                    if (depsMessages[key].length > 0) {
-                        // Use internationalization labels and bold for section titles
-                        var translatedKey = `<b><u>${OB.I18N.getLabel(`ETDEP_${key}`)}</u></b>`;
-                        versionChangeMessage += `<li>${translatedKey}<ul><li>${depsMessages[key].join("</li><li>")}</li></ul></li>`;
-                    }
-                });
-
-                versionChangeMessage += `</ul>`;
-                messages.push(versionChangeMessage);
-            }
-
-            // If there are messages, display them on the message bar
             if (messages.length > 0) {
                 var finalMessage = `<ul>${messages.join("")}</ul>`;
                 view.messageBar.setMessage(messageType, messageType === 'warning' ? 'Warning' : 'Information', finalMessage);
@@ -101,6 +59,46 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
         }
     );
 };
+
+// Function to process dependency messages
+function processDependencyMessages(comparisonData) {
+    if (!comparisonData) return "";
+
+    var depsMessages = { 'NEW': [], 'UPDATED': [] };
+    comparisonData.forEach(function(dep) {
+        var message = `<b>${dep.artifact}</b>`;
+        switch (dep.status) {
+            case '[New Dependency]':
+                var newDependencyMessage = `${OB.I18N.getLabel("ETDEP_New_Dependency_With_Version")} ${dep.version_v2}`;
+                message += ` - ${newDependencyMessage}`;
+                depsMessages['NEW'].push(message);
+                break;
+            case '[Updated]':
+                var updatedMessage = dep.version_v1 && dep.version_v2 ?
+                    `${OB.I18N.getLabel("ETDEP_Change_From_Version")} ${dep.version_v1} ${OB.I18N.getLabel("ETDEP_To")} ${dep.version_v2}` :
+                    `${OB.I18N.getLabel("ETDEP_Change_To_Version")} ${dep.version_v2}`;
+                message += ` - ${updatedMessage}`;
+                depsMessages['UPDATED'].push(message);
+                break;
+        }
+    });
+
+    if (depsMessages['NEW'].length > 0 || depsMessages['UPDATED'].length > 0) {
+        var versionChangeMessage = "<ul>";
+        ['NEW', 'UPDATED'].forEach(function(key) {
+            if (depsMessages[key].length > 0) {
+                var translatedLabel = OB.I18N.getLabel("ETDEP_" + key);
+                var translatedKey = "<b><u>" + translatedLabel + "</u></b>";
+                var joinedMessages = depsMessages[key].join("</li><li>");
+                versionChangeMessage += "<li>" + translatedKey + "<ul><li>" + joinedMessages + "</li></ul></li>";
+            }
+        });
+        versionChangeMessage += "</ul>";
+        return versionChangeMessage;
+    }
+
+    return "";
+}
 
 // Function to compare two version strings
 function compareVersions(version1, version2) {
