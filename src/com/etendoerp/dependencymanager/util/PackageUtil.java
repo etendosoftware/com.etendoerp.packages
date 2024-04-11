@@ -21,6 +21,7 @@ public class PackageUtil {
   public static final String ETENDO_CORE = "etendo-core";
   public static final String GROUP = "group";
   public static final String ARTIFACT = "artifact";
+  public static final String VERSION = "version";
   public static final String STATUS = "status";
   public static final String NEW_DEPENDENCY = "New Dependency";
   public static final String UPDATED = "Updated";

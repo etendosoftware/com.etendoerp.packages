@@ -48,7 +48,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
     try {
       JSONObject jsonContent = new JSONObject(content);
       String depGroup = jsonContent.optString("depGroup");
-      String artifact = jsonContent.optString("artifact");
+      String artifact = jsonContent.optString(PackageUtil.ARTIFACT);
       String updateToVersion = jsonContent.optString("updateToVersion");
       String currentVersion = jsonContent.optString("currentVersion");
 
@@ -164,10 +164,10 @@ public class SelectorChangeVersion extends BaseActionHandler {
 
   private JSONObject buildDependencyInfo(String key, PackageDependency depV1, PackageDependency depV2) throws JSONException {
     JSONObject dependencyInfo = new JSONObject();
-    dependencyInfo.put("group", key.split(":")[0]);
-    dependencyInfo.put("artifact", key.split(":")[1]);
-    dependencyInfo.put("version_v1", depV1 != null ? depV1.getVersion() : "");
-    dependencyInfo.put("version_v2", depV2 != null ? depV2.getVersion() : "");
+    dependencyInfo.put(PackageUtil.GROUP, key.split(":")[0]);
+    dependencyInfo.put(PackageUtil.ARTIFACT, key.split(":")[1]);
+    dependencyInfo.put(PackageUtil.VERSION_V1, depV1 != null ? depV1.getVersion() : "");
+    dependencyInfo.put(PackageUtil.VERSION_V2, depV2 != null ? depV2.getVersion() : "");
 
     if (depV1 == null && depV2 != null) {
       dependencyInfo.put(STATUS, NEW_DEPENDENCY);

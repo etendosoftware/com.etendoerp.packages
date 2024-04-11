@@ -108,10 +108,10 @@ public class ChangeVersion extends BaseProcessActionHandler {
     PackageDependency depV2 = dependenciesUpdate.get(key);
 
     String[] parts = key.split(":");
-    dependencyInfo.put("group", parts[0]);
-    dependencyInfo.put("artifact", parts[1]);
-    dependencyInfo.put("version_v1", depV1 != null ? depV1.getVersion() : "");
-    dependencyInfo.put("version_v2", depV2 != null ? depV2.getVersion() : "");
+    dependencyInfo.put(PackageUtil.GROUP, parts[0]);
+    dependencyInfo.put(PackageUtil.ARTIFACT, parts[1]);
+    dependencyInfo.put(PackageUtil.VERSION_V1, depV1 != null ? depV1.getVersion() : "");
+    dependencyInfo.put(PackageUtil.VERSION_V2, depV2 != null ? depV2.getVersion() : "");
 
     if (depV1 == null && depV2 != null) {
       dependencyInfo.put(PackageUtil.STATUS, PackageUtil.NEW_DEPENDENCY);

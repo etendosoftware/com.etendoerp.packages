@@ -3,6 +3,7 @@ package com.etendoerp.dependencymanager.process;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.PackageUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -140,8 +141,8 @@ public class UpdatePackages extends DalBaseProcess {
     private Package findOrCreatePackage(String group, String artifact) {
         Package pkg = OBDal.getInstance()
             .createQuery(Package.class, "e where e.group = :group and e.artifact = :artifact")
-            .setNamedParameter("group", group)
-            .setNamedParameter("artifact", artifact)
+            .setNamedParameter(PackageUtil.GROUP, group)
+            .setNamedParameter(PackageUtil.ARTIFACT, artifact)
             .uniqueResult();
 
         if (pkg == null) {
@@ -279,9 +280,9 @@ public class UpdatePackages extends DalBaseProcess {
         PackageDependency dep = OBDal.getInstance()
             .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId and e.group = :group and e.artifact = :artifact and e.version = :version")
             .setNamedParameter("packageVersionId", pkgVersion.getId())
-            .setNamedParameter("group", group)
-            .setNamedParameter("artifact", artifact)
-            .setNamedParameter("version", version)
+            .setNamedParameter(PackageUtil.GROUP, group)
+            .setNamedParameter(PackageUtil.ARTIFACT, artifact)
+            .setNamedParameter(PackageUtil.VERSION, version)
             .uniqueResult();
 
         if (dep == null) {
