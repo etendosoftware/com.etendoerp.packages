@@ -73,7 +73,7 @@
 <!--35DB194C331C4D7E90BB6D468099978C-->  <DESCRIPTION><![CDATA[Change the selected dependency version to any version available in the module management window]]></DESCRIPTION>
 <!--35DB194C331C4D7E90BB6D468099978C-->  <HELP><![CDATA[* This button will trigger a dropdown menu displaying available versions for the selected dependency.
 * Display a warning to inform the user about potential downgrade issues.
-* Clearly mark any dependencies that need to be added or removed with tags like "New Dependency" or "Deleted".
+* Clearly mark any dependencies that need to be added or removed with tags like "New Dependency" or "Updated".
 * If incompatible, show a warning message to alert the user.]]></HELP>
 <!--35DB194C331C4D7E90BB6D468099978C-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--35DB194C331C4D7E90BB6D468099978C-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>

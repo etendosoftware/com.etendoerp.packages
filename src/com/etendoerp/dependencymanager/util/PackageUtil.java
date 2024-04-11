@@ -21,10 +21,12 @@ public class PackageUtil {
   public static final String ETENDO_CORE = "etendo-core";
   public static final String GROUP = "group";
   public static final String ARTIFACT = "artifact";
+  public static final String VERSION = "version";
   public static final String STATUS = "status";
   public static final String NEW_DEPENDENCY = "New Dependency";
-  public static final String DELETED = "Deleted";
   public static final String UPDATED = "Updated";
+  public static final String VERSION_V1 = "version_v1";
+  public static final String VERSION_V2 = "version_v2";
 
   /**
    * Private constructor to prevent instantiation.
