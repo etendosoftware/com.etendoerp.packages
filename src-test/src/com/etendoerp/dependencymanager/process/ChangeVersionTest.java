@@ -15,7 +15,7 @@ class ChangeVersionTest {
   void buildDependencyInfoNewDependency() throws Exception {
     Map<String, PackageDependency> dependenciesCurrent = new HashMap<>();
     Map<String, PackageDependency> dependenciesUpdate = new HashMap<>();
-    String key = "group:artifact";
+    String key = PackageUtil.GROUP + ":" + PackageUtil.ARTIFACT;
     PackageDependency newDep = new PackageDependency();
     newDep.setVersion("2.0.0");
     dependenciesUpdate.put(key, newDep);
@@ -24,10 +24,10 @@ class ChangeVersionTest {
 
     JSONObject result = changeVersion.buildDependencyInfo(dependenciesCurrent, dependenciesUpdate, key);
 
-    assertEquals("group", result.getString("group"));
-    assertEquals("artifact", result.getString("artifact"));
-    assertEquals("", result.getString("version_v1"));
-    assertEquals("2.0.0", result.getString("version_v2"));
+    assertEquals(PackageUtil.GROUP, result.getString(PackageUtil.GROUP));
+    assertEquals(PackageUtil.ARTIFACT, result.getString(PackageUtil.ARTIFACT));
+    assertEquals("", result.getString(PackageUtil.VERSION_V1));
+    assertEquals("2.0.0", result.getString(PackageUtil.VERSION_V2));
     assertEquals(PackageUtil.NEW_DEPENDENCY, result.getString(PackageUtil.STATUS));
   }
 }
