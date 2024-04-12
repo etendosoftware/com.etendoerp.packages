@@ -26,6 +26,7 @@ public class DependencyManagerComponentProvider extends BaseComponentProvider {
     final GlobalResourcesHelper grhelper = new GlobalResourcesHelper();
     // Add all the javascript source files needed in our module
     grhelper.addERP("uninstallDependencyWarnings.js");
+    grhelper.addERP("changeVersionDropdown.js");
     return grhelper.getGlobalResources();
   }
 

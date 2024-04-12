@@ -49,7 +49,15 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="VERSION_STATUS" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
       <column name="UNINSTALLDEPENDENCY" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault><![CDATA['N']]></onCreateDefault>
+      </column>
+      <column name="CHANGE_VERSION" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
         <default><![CDATA[N]]></default>
         <onCreateDefault><![CDATA['N']]></onCreateDefault>
       </column>
@@ -59,5 +67,8 @@
       <foreign-key foreignTable="AD_ORG" name="ETDEP_DEPENDENCY_AD_ORG">
         <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
       </foreign-key>
+      <check name="ETD_CHK_CV"><![CDATA[CHANGE_VERSION IN ('Y', 'N')]]></check>
+      <check name="ETD_CHK_IA"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
+      <check name="ETD_CHK_UD"><![CDATA[UNINSTALLDEPENDENCY IN ('Y', 'N')]]></check>
     </table>
   </database>

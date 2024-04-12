@@ -67,7 +67,7 @@ public class UninstallDependency extends BaseActionHandler {
         message.put("text", String.format(OBMessageUtils.messageBD("ETDEP_Error_Uninstalling"), jsone.getMessage()));
         errorMessage.put(MESSAGE, message);
       } catch (JSONException ignore) {
-        log.debug(jsone);
+        log.error(jsone);
       }
     } catch (IOException ioe) {
       try {
@@ -80,7 +80,7 @@ public class UninstallDependency extends BaseActionHandler {
         message.put("text", String.format(OBMessageUtils.messageBD("ETDEP_Error_File"), dependencyName));
         errorMessage.put(MESSAGE, message);
       } catch (Exception ignore) {
-        log.debug(ioe);
+        log.error(ioe);
       } finally {
         OBDal.getInstance().rollbackAndClose();
       }

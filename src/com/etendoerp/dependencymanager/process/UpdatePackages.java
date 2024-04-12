@@ -3,14 +3,16 @@ package com.etendoerp.dependencymanager.process;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.PackageUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
 import org.openbravo.base.exception.OBException;
 import org.openbravo.base.session.OBPropertiesProvider;
-import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 import org.openbravo.scheduling.ProcessBundle;
@@ -95,16 +97,7 @@ public class UpdatePackages extends DalBaseProcess {
     }
   }
 
-  private void updateInstalledVersion(Package pkg, String installedVersion) {
-    try {
-      OBContext.setAdminMode(true);
-      pkg.setInstalledVersion(installedVersion);
-      OBDal.getInstance().save(pkg);
-      OBDal.getInstance().flush();
-    } finally {
-      OBContext.restorePreviousMode();
-    }
-  }
+
 
   /**
    * Processes a package from the GitHub API.
@@ -141,7 +134,7 @@ public class UpdatePackages extends DalBaseProcess {
    */
   private boolean isPackageExcluded(String packageName) {
     for (String prefix : EXCLUDED_PACKAGE_PREFIXES) {
-      if (packageName.startsWith(prefix)) {
+      if (StringUtils.startsWith(packageName, prefix)) {
         return true;
       }
     }
@@ -159,8 +152,8 @@ public class UpdatePackages extends DalBaseProcess {
   private Package findOrCreatePackage(String group, String artifact) {
     Package pkg = OBDal.getInstance()
         .createQuery(Package.class, "e where e.group = :group and e.artifact = :artifact")
-        .setNamedParameter("group", group)
-        .setNamedParameter("artifact", artifact)
+        .setNamedParameter(PackageUtil.GROUP, group)
+        .setNamedParameter(PackageUtil.ARTIFACT, artifact)
         .uniqueResult();
 
     if (pkg == null) {
@@ -301,24 +294,21 @@ public class UpdatePackages extends DalBaseProcess {
     }
   }
 
-  /**
-   * Finds or creates a package dependency.
-   *
-   * @param pkgVersion
-   * @param group
-   * @param artifact
-   * @param version
-   */
-  private void findOrCreatePackageDependency(PackageVersion pkgVersion, String group,
-      String artifact, String version) {
-    PackageDependency dep = OBDal.getInstance()
-        .createQuery(PackageDependency.class,
-            "e where e.packageVersion.id = :packageVersionId and e.group = :group and e.artifact = :artifact and e.version = :version")
-        .setNamedParameter("packageVersionId", pkgVersion.getId())
-        .setNamedParameter("group", group)
-        .setNamedParameter("artifact", artifact)
-        .setNamedParameter(VERSION, version)
-        .uniqueResult();
+    /**
+     * Finds or creates a package dependency.
+     * @param pkgVersion
+     * @param group
+     * @param artifact
+     * @param version
+     */
+    private void findOrCreatePackageDependency(PackageVersion pkgVersion, String group, String artifact, String version) {
+        PackageDependency dep = OBDal.getInstance()
+            .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId and e.group = :group and e.artifact = :artifact and e.version = :version")
+            .setNamedParameter("packageVersionId", pkgVersion.getId())
+            .setNamedParameter(PackageUtil.GROUP, group)
+            .setNamedParameter(PackageUtil.ARTIFACT, artifact)
+            .setNamedParameter(PackageUtil.VERSION, version)
+            .uniqueResult();
 
     if (dep == null) {
       dep = new PackageDependency();
