@@ -9,7 +9,10 @@ import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -43,7 +46,6 @@ public class UpdateLocalPackagesUtil {
    */
   public static void update() throws IOException {
     OBContext.setAdminMode(true);
-    // download DATASET_FILE_URL
     File dataSetFile = downloadFile(DATASET_FILE_URL);
     var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
     processPackages(xmlRootElement);

@@ -19,7 +19,6 @@ public class UpdateLocalPackagesAction extends Action {
     } catch (Exception e) {
       result.setMessage(e.getMessage());
       result.setType(Result.Type.ERROR);
-      return result;
     }
     return result;
 
