@@ -1,10 +1,10 @@
 package com.etendoerp.dependencymanager.actions;
 
-import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.mutable.MutableBoolean;
+import org.apache.commons.lang.mutable.MutableInt;
 import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.exception.OBException;
@@ -23,11 +23,10 @@ import com.smf.jobs.ActionResult;
 import com.smf.jobs.Result;
 
 public class ChangeFormat extends Action {
-  int errors = 0;
 
   @Override
   protected ActionResult action(JSONObject parameters, MutableBoolean isStopped) {
-    errors = 0;
+    MutableInt errors = new MutableInt(0);
 
     try {
       List<Dependency> dependencies = getInputContents(getInputClass());
@@ -36,12 +35,12 @@ public class ChangeFormat extends Action {
       int index = 0;
       StringBuilder message = new StringBuilder();
       if (dependencies.size() > 1) {
-        throw new OBException("Process is not Multi Records");
+        throw new OBException("ETDEP_Not_Multirecords");
       }
       for (Dependency dependency : dependencies) {
         String depName = dependency.getGroup() + "." + dependency.getArtifact();
         String messageHeader = "<strong>" + depName + "</strong>";
-        String depResult = changeDependencyFormat(dependency, newFormat);
+        String depResult = changeDependencyFormat(dependency, newFormat, errors);
         message.append(messageHeader)
             .append(": ")
             .append(depResult)
@@ -52,7 +51,7 @@ public class ChangeFormat extends Action {
         }
       }
       OBDal.getInstance().flush();
-      if (errors == dependencies.size()) {
+      if (errors.intValue() == dependencies.size()) {
         throw new OBException(message.toString());
       }
       return buildSuccessResult(message.toString());
@@ -61,10 +60,9 @@ public class ChangeFormat extends Action {
     }
   }
 
-  private String changeDependencyFormat(Dependency dependency, String newFormat) {
+  private String changeDependencyFormat(Dependency dependency, String newFormat, MutableInt errors) {
     String depName = dependency.getGroup() + "." + dependency.getArtifact();
-    String previousFormat = dependency.getFormat();
-    String strNewFormat = "";
+    String strNewFormat;
 
     OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
     packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, dependency.getGroup()));
@@ -73,11 +71,11 @@ public class ChangeFormat extends Action {
     Package dependencyPackage = (Package) packageCriteria.uniqueResult();
 
     if (dependencyPackage == null) {
-      errors++;
+      errors.increment();
       return String.format(OBMessageUtils.messageBD("ETDEP_No_Dependency_Package"), depName);
     }
     if (depModuleIsInDevelopment(depName)) {
-      errors++;
+      errors.increment();
       return String.format(OBMessageUtils.messageBD("ETDEP_Dependency_Module_In_Development"));
     }
 
@@ -85,20 +83,10 @@ public class ChangeFormat extends Action {
       String newVersion = PackageUtil.getCoreCompatibleOrLatestVersion(dependencyPackage);
       dependency.setVersion(newVersion);
     }
-    if (StringUtils.equals(DependencyUtil.FORMAT_SOURCE, newFormat)) {
-      dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
-      strNewFormat = "Source";
-    } else if (StringUtils.equals(DependencyUtil.FORMAT_JAR, newFormat)) {
-      dependency.setFormat(DependencyUtil.FORMAT_JAR);
-      strNewFormat = "Jar";
-      try {
-        DependencyUtil.deleteSourceDependencyDir(depName);
-      } catch (IOException e) {
-        errors++;
-        dependency.setFormat(previousFormat);
-        return String.format(OBMessageUtils.messageBD("ETDEP_Error_File"), depName);
-      }
-    }
+    dependency.setFormat(newFormat);
+    strNewFormat = StringUtils.equals(DependencyUtil.FORMAT_SOURCE, newFormat) ? "Source" : "Jar";
+
+    dependency.setInstallationStatus(DependencyUtil.STATUS_PENDING);
     OBDal.getInstance().save(dependency);
     return String.format(OBMessageUtils.messageBD("ETDEP_Format_Changed"), strNewFormat);
   }

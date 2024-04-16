@@ -37,6 +37,7 @@ public class SelectLatestCompVersions extends BaseActionHandler {
   @Override
   protected JSONObject execute(Map<String, Object> parameters, String content) {
     JSONObject jsonResponse = new JSONObject();
+    JSONArray depsNames = new JSONArray();
     String currentCore = "";
     try {
       JSONObject jsonContent = new JSONObject(content);
@@ -50,6 +51,7 @@ public class SelectLatestCompVersions extends BaseActionHandler {
         String artifact = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.ARTIFACT);
         String currentVersion = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.VERSION);
         String depName = group + "." + artifact;
+        depsNames.put(depName);
 
         OBCriteria<Package> depPkgCriteria = OBDal.getInstance().createCriteria(Package.class);
         depPkgCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
@@ -79,6 +81,7 @@ public class SelectLatestCompVersions extends BaseActionHandler {
       if (!StringUtils.equals(strMessage, msgWithNoUpdates)) {
         jsonResponse.put(String.valueOf(ResponseActionsBuilder.MessageType.WARNING), warning);
         jsonResponse.put("message", strMessage);
+        jsonResponse.put("dependencies", depsNames);
       }
     } catch (JSONException e) {
       throw new OBException(e);

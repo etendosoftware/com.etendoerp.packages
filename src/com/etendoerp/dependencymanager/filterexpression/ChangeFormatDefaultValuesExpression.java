@@ -16,7 +16,7 @@ public class ChangeFormatDefaultValuesExpression implements FilterExpression {
     String currentParam = requestMap.get("currentParam");
     try {
       JSONObject context = new JSONObject(requestMap.get("context"));
-      if (currentParam != null && StringUtils.equals(currentParam, "newFormat")) {
+      if (StringUtils.equals("newFormat", currentParam)) {
         switch (context.getString("inpformat")) {
           case DependencyUtil.FORMAT_SOURCE:
             return DependencyUtil.FORMAT_JAR;
