@@ -102,22 +102,20 @@ public class ChangeVersion extends BaseProcessActionHandler {
     return result;
   }
 
-  private JSONObject buildDependencyInfo(Map<String, PackageDependency> dependenciesCurrent, Map<String, PackageDependency> dependenciesUpdate, String key) throws JSONException {
+  public JSONObject buildDependencyInfo(Map<String, PackageDependency> dependenciesCurrent, Map<String, PackageDependency> dependenciesUpdate, String key) throws JSONException {
     JSONObject dependencyInfo = new JSONObject();
     PackageDependency depV1 = dependenciesCurrent.get(key);
     PackageDependency depV2 = dependenciesUpdate.get(key);
 
     String[] parts = key.split(":");
-    dependencyInfo.put("group", parts[0]);
-    dependencyInfo.put("artifact", parts[1]);
-    dependencyInfo.put("version_v1", depV1 != null ? depV1.getVersion() : "");
-    dependencyInfo.put("version_v2", depV2 != null ? depV2.getVersion() : "");
+    dependencyInfo.put(PackageUtil.GROUP, parts[0]);
+    dependencyInfo.put(PackageUtil.ARTIFACT, parts[1]);
+    dependencyInfo.put(PackageUtil.VERSION_V1, depV1 != null ? depV1.getVersion() : "");
+    dependencyInfo.put(PackageUtil.VERSION_V2, depV2 != null ? depV2.getVersion() : "");
 
-    if (depV1 != null && depV2 == null) {
-      dependencyInfo.put(PackageUtil.STATUS, PackageUtil.DELETED);
-    } else if (depV1 == null && depV2 != null) {
+    if (depV1 == null && depV2 != null) {
       dependencyInfo.put(PackageUtil.STATUS, PackageUtil.NEW_DEPENDENCY);
-    } else if (depV1 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
+    } else if (depV1 != null && depV2 != null && !StringUtils.equals(depV1.getVersion(), depV2.getVersion())) {
       dependencyInfo.put(PackageUtil.STATUS, PackageUtil.UPDATED);
     }
 
@@ -135,26 +133,10 @@ public class ChangeVersion extends BaseProcessActionHandler {
         if (StringUtils.equals(PackageUtil.NEW_DEPENDENCY, status) || StringUtils.equals(PackageUtil.UPDATED, status)) {
           String version = dependencyInfo.getString("version_v2");
           PackageUtil.updateOrCreateDependency(group, artifact, version);
-        } else if (StringUtils.equals(PackageUtil.DELETED, status)) {
-          deleteDependency(group, artifact);
         }
       }
     } catch (JSONException e) {
       log.debug("Error processing dependencies comparison results", e);
     }
   }
-
-  private void deleteDependency(String group, String artifact) {
-    Dependency dependencyToDelete = OBDal.getInstance()
-        .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
-        .setNamedParameter("group", group)
-        .setNamedParameter("artifact", artifact)
-        .uniqueResult();
-
-    if (dependencyToDelete != null) {
-      OBDal.getInstance().remove(dependencyToDelete);
-      OBDal.getInstance().flush();
-    }
-  }
-
 }
