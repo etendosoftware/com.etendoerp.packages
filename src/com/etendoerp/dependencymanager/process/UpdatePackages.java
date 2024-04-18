@@ -3,6 +3,7 @@ package com.etendoerp.dependencymanager.process;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.PackageUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -10,7 +11,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
+import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.session.OBPropertiesProvider;
+import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
 import org.openbravo.scheduling.ProcessBundle;
@@ -39,6 +42,9 @@ public class UpdatePackages extends DalBaseProcess {
     public static final String GITHUB_USER = "githubUser";
     public static final String GITHUB_TOKEN = "githubToken";
     public static final String NAME = "name";
+    public static final String VERSION = "version";
+    public static final String GROUP = "group";
+    public static final String ARTIFACT = "artifact";
     public static final String GITHUB_API_URI_VERSIONS = "/versions";
     private String _auth;
     private static final List<String> EXCLUDED_PACKAGE_PREFIXES = Arrays.asList(
@@ -62,7 +68,48 @@ public class UpdatePackages extends DalBaseProcess {
         String githubToken = properties.getProperty(GITHUB_TOKEN, "");
         // Base64 Basic Auth token
         this._auth = BASIC_AUTH_TOKEN + Base64.getEncoder().encodeToString((githubUser + ":" + githubToken).getBytes());
+        processPackagesAndVersions();
+        processDependencies();
+    }
 
+    /**
+     * This method processes package dependencies.
+     * It fetches packages from the GitHub API in pages, with each page containing multiple packages.
+     * For each package, it attempts to process the package for its dependencies.
+     * If any exception occurs during the processing of a package, it is caught and logged, and the method continues with the next package.
+     * After all packages in a page have been processed, the method checks if there are more packages to fetch.
+     * If there are no more packages to fetch (i.e., the fetched list of packages is empty), it breaks the loop.
+     * After all packages have been processed, it flushes the session to synchronize with the database.
+     * @throws Exception If an error occurs during processing.
+     */
+    private void processDependencies() throws Exception {
+        for (int page = 1; page < 10; page++) {
+            List<Map<String, Object>> packages = fetchPackages(page);
+            if (packages.isEmpty()) {
+                break;
+            }
+            for (Map<String, Object> pkg : packages) {
+                try {
+                    processPackageDependency(pkg);
+                } catch (Exception e) {
+                    log.error("Failed to process package", e);
+                }
+            }
+        }
+        OBDal.getInstance().flush();
+    }
+
+    /**
+     * This method processes packages and their versions.
+     * It fetches packages from the GitHub API in pages, with each page containing multiple packages.
+     * For each package, it attempts to process the package.
+     * If any exception occurs during the processing of a package, it is caught and logged, and the method continues with the next package.
+     * After all packages in a page have been processed, the method checks if there are more packages to fetch.
+     * If there are no more packages to fetch (i.e., the fetched list of packages is empty), it breaks the loop.
+     * After all packages have been processed, it flushes the session to synchronize with the database.
+     * @throws Exception If an error occurs during processing.
+     */
+    private void processPackagesAndVersions() throws Exception {
         for (int page = 1; page < 10; page++) {
             List<Map<String, Object>> packages = fetchPackages(page);
             if (packages.isEmpty()) {
@@ -72,10 +119,11 @@ public class UpdatePackages extends DalBaseProcess {
                 try {
                     processPackage(pkg);
                 } catch (Exception e) {
-                    log.error("Failed to process package", e);
+                    log.error("Failed to process package dependencies", e);
                 }
             }
         }
+        OBDal.getInstance().flush();
     }
 
     /**
@@ -108,7 +156,35 @@ public class UpdatePackages extends DalBaseProcess {
 
             List<Map<String, Object>> versions = fetchPackageVersions(name);
             for (Map<String, Object> version : versions) {
-                processPackageVersion(version, res, group, artifact);
+                processPackageVersion(version, res);
+            }
+        } else {
+            log.debug("Skipping excluded package: {}", name);
+        }
+    }
+
+    /**
+     * Processes a package from the GitHub API for its dependencies.
+     * If the package is not excluded, it fetches the package versions and processes each version for dependencies.
+     * If the package is excluded, it skips the processing and logs a debug message.
+     *
+     * @param pkg The package map object from the GitHub API.
+     * @throws Exception If an error occurs during processing.
+     */
+    private void processPackageDependency(Map<String, Object> pkg) throws Exception {
+        log.debug("Processing package: {}", pkg.get(NAME));
+        String name = (String) pkg.get(NAME);
+
+        if (!isPackageExcluded(name)) {
+            String[] parts = name.split("\\.");
+            String group = parts[0] + "." + parts[1];
+            String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
+
+            Package res = findOrCreatePackage(group, artifact);
+
+            List<Map<String, Object>> versions = fetchPackageVersions(name);
+            for (Map<String, Object> version : versions) {
+                processPackageDependencyVersion(version, res, group, artifact);
             }
         } else {
             log.debug("Skipping excluded package: {}", name);
@@ -140,8 +216,8 @@ public class UpdatePackages extends DalBaseProcess {
     private Package findOrCreatePackage(String group, String artifact) {
         Package pkg = OBDal.getInstance()
             .createQuery(Package.class, "e where e.group = :group and e.artifact = :artifact")
-            .setNamedParameter("group", group)
-            .setNamedParameter("artifact", artifact)
+            .setNamedParameter(GROUP, group)
+            .setNamedParameter(ARTIFACT, artifact)
             .uniqueResult();
 
         if (pkg == null) {
@@ -170,10 +246,22 @@ public class UpdatePackages extends DalBaseProcess {
      * Processes a package version from the GitHub API.
      * @param version
      * @param pkg
-     * @param group
-     * @param artifact
      */
-    private void processPackageVersion(Map<String, Object> version, Package pkg, String group, String artifact) {
+    private void processPackageVersion(Map<String, Object> version, Package pkg) {
+        String versionName = (String) version.get(NAME);
+        findOrCreatePackageVersion(pkg, versionName);
+    }
+
+    /**
+     * Processes a package version from the GitHub API and checks for dependencies.
+     * If no dependencies are found for the package version, it fetches the POM XML and processes it.
+     *
+     * @param version The version map object from the GitHub API.
+     * @param pkg The package object to which the version belongs.
+     * @param group The group of the package.
+     * @param artifact The artifact of the package.
+     */
+    private void processPackageDependencyVersion(Map<String, Object> version, Package pkg, String group, String artifact) {
         String versionName = (String) version.get(NAME);
         PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
 
@@ -200,7 +288,7 @@ public class UpdatePackages extends DalBaseProcess {
         PackageVersion pkgVersion = OBDal.getInstance()
             .createQuery(PackageVersion.class, "e where e.package.id = :packageId and e.version = :version")
             .setNamedParameter("packageId", pkg.getId())
-            .setNamedParameter("version", version)
+            .setNamedParameter(VERSION, version)
             .uniqueResult();
 
         if (pkgVersion == null) {
@@ -259,7 +347,7 @@ public class UpdatePackages extends DalBaseProcess {
                 for (Element dependency : dependencies.elements("dependency")) {
                     String groupId = dependency.elementText("groupId");
                     String artifactId = dependency.elementText("artifactId");
-                    String versionDep = dependency.elementText("version");
+                    String versionDep = dependency.elementText(VERSION);
                     findOrCreatePackageDependency(pkgVersion, groupId, artifactId, versionDep);
                 }
             }
@@ -279,9 +367,9 @@ public class UpdatePackages extends DalBaseProcess {
         PackageDependency dep = OBDal.getInstance()
             .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId and e.group = :group and e.artifact = :artifact and e.version = :version")
             .setNamedParameter("packageVersionId", pkgVersion.getId())
-            .setNamedParameter("group", group)
-            .setNamedParameter("artifact", artifact)
-            .setNamedParameter("version", version)
+            .setNamedParameter(GROUP, group)
+            .setNamedParameter(ARTIFACT, artifact)
+            .setNamedParameter(VERSION, version)
             .uniqueResult();
 
         if (dep == null) {
@@ -290,6 +378,25 @@ public class UpdatePackages extends DalBaseProcess {
             dep.setGroup(group);
             dep.setArtifact(artifact);
             dep.setVersion(version);
+            OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
+            packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
+            packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
+            Package pkge = (Package) packageCriteria.setMaxResults(1).uniqueResult();
+            if (!StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
+                dep.setExternalDependency(true);
+            }
+            if (pkge != null) {
+                PackageVersion packageVersion;
+                if (!PackageUtil.isMajorMinorPatchVersion(version)) {
+                    packageVersion = PackageUtil.getLastPackageVersion(pkge);
+                } else {
+                    packageVersion = PackageUtil.getPackageVersion(pkge, version);
+                }
+                if (packageVersion != null) {
+                    dep.setDependencyVersion(packageVersion);
+                    dep.setExternalDependency(false);
+                }
+            }
             OBDal.getInstance().save(dep);
         }
     }

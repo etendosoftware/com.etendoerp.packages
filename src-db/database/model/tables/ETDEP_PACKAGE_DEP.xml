@@ -49,6 +49,14 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="DEPENDENCY_VERSION_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EXTERNAL_DEPENDENCY" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
       <foreign-key foreignTable="AD_CLIENT" name="ETDEP_PACKAGE_DEP_CLI">
         <reference local="AD_CLIENT_ID" foreign="AD_CLIENT_ID"/>
       </foreign-key>
@@ -58,6 +66,11 @@
       <foreign-key foreignTable="ETDEP_PACKAGE_VERSION" name="ETDEP_PACKAGE_DEP_PKG">
         <reference local="ETDEP_PACKAGE_VERSION_ID" foreign="ETDEP_PACKAGE_VERSION_ID"/>
       </foreign-key>
+      <foreign-key foreignTable="ETDEP_PACKAGE_VERSION" name="ETDEP_PACKAGE_DEP_VER">
+        <reference local="DEPENDENCY_VERSION_ID" foreign="ETDEP_PACKAGE_VERSION_ID"/>
+      </foreign-key>
       <check name="ETDEP_PACKAGE_DEP_ACT"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
+      <check name="ETDEP_PCKG_DEP_EXT_DEP_CHK"><![CDATA[EXTERNAL_DEPENDENCY IN ('Y', 'N')]]></check>
+      <check name="ETDEP_PCKG_EXTERNAL_DEP_CHK"><![CDATA[EXTERNAL_DEPENDENCY IN ('Y', 'N')]]></check>
     </table>
   </database>
