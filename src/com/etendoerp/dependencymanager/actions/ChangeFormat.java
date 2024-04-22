@@ -61,8 +61,8 @@ public class ChangeFormat extends Action {
   }
 
   private String changeDependencyFormat(Dependency dependency, String newFormat, MutableInt errors) {
+    String responseMessage = "";
     String depName = dependency.getGroup() + "." + dependency.getArtifact();
-    String strNewFormat;
 
     OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
     packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, dependency.getGroup()));
@@ -84,11 +84,13 @@ public class ChangeFormat extends Action {
       dependency.setVersion(newVersion);
     }
     dependency.setFormat(newFormat);
-    strNewFormat = StringUtils.equals(DependencyUtil.FORMAT_SOURCE, newFormat) ? "Source" : "Jar";
+    responseMessage = StringUtils.equals(DependencyUtil.FORMAT_SOURCE, newFormat) ?
+        String.format(OBMessageUtils.messageBD("ETDEP_Format_Changed_Source")) :
+        String.format(OBMessageUtils.messageBD("ETDEP_Format_Changed_Jar"));
 
     dependency.setInstallationStatus(DependencyUtil.STATUS_PENDING);
     OBDal.getInstance().save(dependency);
-    return String.format(OBMessageUtils.messageBD("ETDEP_Format_Changed"), strNewFormat);
+    return responseMessage;
   }
 
   private boolean depModuleIsInDevelopment(String dependencyName) {

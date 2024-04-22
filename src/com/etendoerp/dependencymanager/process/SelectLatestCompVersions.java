@@ -20,18 +20,20 @@ import com.etendoerp.dependencymanager.util.PackageUtil;
 public class SelectLatestCompVersions extends BaseActionHandler {
   private static void constructDependencyUpdateItem(StringBuilder message, String depName,
       JSONObject compatibilityInfo, boolean warning, String newVersion) throws JSONException {
-    message.append("<li>")
+    message.append("<strong>")
         .append(depName)
+        .append("</strong>")
         .append(" - ");
     if (warning) {
       message.append(String.format(OBMessageUtils.messageBD("ETDEP_Latest_Version_Incompatible"),
-          compatibilityInfo.getString(PackageUtil.CORE_VERSION_RANGE), newVersion));
+          compatibilityInfo.getString(PackageUtil.CURRENT_CORE_VERSION),
+          newVersion,
+          compatibilityInfo.getString(PackageUtil.CORE_VERSION_RANGE)));
     } else {
       message.append(OBMessageUtils.messageBD("ETDEP_Updating_to_Latest"))
           .append(": ")
           .append(newVersion);
     }
-    message.append("</li>");
   }
 
   @Override
@@ -43,9 +45,9 @@ public class SelectLatestCompVersions extends BaseActionHandler {
       JSONObject jsonContent = new JSONObject(content);
       JSONArray selectedRecords = jsonContent.getJSONArray("records");
       boolean warning = false;
-      StringBuilder message = new StringBuilder(OBMessageUtils.messageBD("ETDEP_Dependency_Update_Info"));
-      String msgWithNoUpdates = OBMessageUtils.messageBD("ETDEP_Dependency_Update_Info") + "<ul></ul>";
-      message.append("<ul>");
+      String msgWithNoUpdates = OBMessageUtils.messageBD("ETDEP_Dependency_Update_Info");
+      StringBuilder message = new StringBuilder(msgWithNoUpdates);
+
       for (int i = 0; i < selectedRecords.length(); i++) {
         String group = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.GROUP);
         String artifact = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.ARTIFACT);
@@ -69,13 +71,13 @@ public class SelectLatestCompVersions extends BaseActionHandler {
         if (!compatibilityInfo.getBoolean(PackageUtil.IS_COMPATIBLE)) {
           warning = true;
         }
+        message.append("</br>");
         constructDependencyUpdateItem(message, depName, compatibilityInfo, warning, newVersion);
       }
-      message.append("</ul>");
 
       if (warning) {
         message.append("<br>")
-            .append(String.format(OBMessageUtils.messageBD("ETDEP_Warning_Incompatible_Deps"), currentCore));
+            .append(String.format(OBMessageUtils.messageBD("ETDEP_Warning_Incompatible_Dep")));
       }
       String strMessage = message.toString();
       if (!StringUtils.equals(strMessage, msgWithNoUpdates)) {

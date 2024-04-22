@@ -31,12 +31,11 @@ OB.ETDEP.ChangeFormat.onLoad = function (view) {
   );
 
   // Additional call if the current format is 'L'
-  if (currentFormat === 'L') {
+  if (currentFormat == 'L') {
     function handleSelectLatestCompVersionsResponse(response, data, request) {
       if (data.dependencies != null) {
-        var msg = appendWarnAboutDeletingSourceFiles(data.message, data.dependencies[0], currentFormat);
         var messageType = 'warning';
-        view.messageBar.setMessage(messageType, messageType.toUpperCase(), msg);
+        view.messageBar.setMessage(messageType, messageType.toUpperCase(), data.message);
       }
     }
 
@@ -46,7 +45,7 @@ OB.ETDEP.ChangeFormat.onLoad = function (view) {
       {},
       handleSelectLatestCompVersionsResponse
     );
-  } else if (currentFormat === 'S') {
+  } else if (currentFormat == 'S') {
     var messageType = 'warning';
     var depJavaPackage = selectedRecords[0].group + "." + selectedRecords[0].artifact;
     view.messageBar.setMessage(messageType, messageType.toUpperCase(),
@@ -59,21 +58,35 @@ OB.ETDEP.ChangeFormat.onChange = function (item, view, form) {
   var newFormatField = form.getItem('newFormat');
   var selectedRecords = view.parentWindow.view.viewGrid.getSelectedRecords();
   var currentFormat = selectedRecords[0].format;
-
-  if ((currentFormat === 'L' || currentFormat === 'S') && newFormatField.getValue() === 'J') {
-    var messageType = 'warning';
+  var message = "";
+  var messageType = "success";
+  if ((currentFormat == 'L' || currentFormat == 'S') && newFormatField.getValue() == 'J') {
     var depJavaPackage = selectedRecords[0].group + "." + selectedRecords[0].artifact;
-    view.messageBar.setMessage(messageType, messageType.toUpperCase(),
-      appendWarnAboutDeletingSourceFiles("", depJavaPackage, currentFormat));
+    messageType = "warning";
+    message = appendWarnAboutDeletingSourceFiles("", depJavaPackage, currentFormat);
+  }
+  if (currentFormat == 'L') {
+    OB.RemoteCallManager.call(
+      'com.etendoerp.dependencymanager.process.SelectLatestCompVersions',
+      { records: selectedRecords },
+      {},
+      function (response, data, request) {
+        message = data.message + "</br>" + message;
+        if (data.dependencies != null) {
+            messageType = 'warning';
+        }
+        view.messageBar.setMessage(messageType, messageType.toUpperCase(), message)
+      }
+    );
   }
 }
 
 function appendWarnAboutDeletingSourceFiles(message, module, format) {
   var formatName = format == 'S' ? "SOURCE" : "LOCAL";
   // Each replace only replaces the first appearance of the placeholder
-  var sndMessage = "<li>" + OB.I18N.getLabel("ETDEP_Will_Delete_Source_Dirs").replace('%s', module) + "</li>";
+  var sndMessage = OB.I18N.getLabel("ETDEP_Will_Delete_Source_Dirs").replace('%s', module);
   sndMessage = sndMessage.replace('%s', formatName);
   sndMessage = sndMessage.replace('%s', module);
 
-  return message + "<ul>" + sndMessage + "</ul>";
+  return message + sndMessage;
 }
