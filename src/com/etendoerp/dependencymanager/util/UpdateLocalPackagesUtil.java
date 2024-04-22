@@ -106,7 +106,7 @@ public class UpdateLocalPackagesUtil {
       packageVersion.setPackage(OBDal.getInstance()
           .get(Package.class, packageElement.element(ETDEP_PACKAGE_TAG).attributeValue(ID)));
       packageVersion.setVersion(packageElement.elementText(VERSION));
-      packageVersion.setInstall(
+      packageVersion.setAddDependency(
           BooleanUtils.toBooleanObject(packageElement.elementText(INSTALL)));
       packageVersion.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));

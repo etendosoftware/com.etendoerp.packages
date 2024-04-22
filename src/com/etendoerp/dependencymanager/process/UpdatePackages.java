@@ -274,6 +274,7 @@ public class UpdatePackages extends DalBaseProcess {
             .count() == 0) {
 
             String pomUrl = buildPomUrl(group, artifact, versionName);
+            log.debug("Fetching POM XML from {}", pomUrl);
             String pomXml = fetchPomXml(pomUrl);
             if(pomXml != null) {
                 processPomXml(pomXml, pkgVersion);
