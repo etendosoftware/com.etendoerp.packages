@@ -19,7 +19,7 @@ public class UpdatePagackesManual extends BaseProcessActionHandler {
   @Override
   protected JSONObject doExecute(Map<String, Object> parameters, String data) {
     try {
-      new UpdatePackages().doExecute(null);
+      new GetPackagesFromRepositories().doExecute(null);
       // Success Message
       return getSuccessMessage(OBMessageUtils.messageBD("ProcessOK"));
 

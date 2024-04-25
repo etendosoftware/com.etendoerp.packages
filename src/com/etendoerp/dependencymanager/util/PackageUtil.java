@@ -7,6 +7,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
+import org.openbravo.erpCommon.utility.OBMessageUtils;
 import org.openbravo.model.ad.module.Module;
 
 import com.etendoerp.dependencymanager.actions.InstallDependency;
@@ -27,6 +28,7 @@ public class PackageUtil {
   public static final String UPDATED = "Updated";
   public static final String VERSION_V1 = "version_v1";
   public static final String VERSION_V2 = "version_v2";
+  public static final String PACKAGE_VERSION_ID = "packageVersion.id";
 
   /**
    * Private constructor to prevent instantiation.
@@ -210,5 +212,33 @@ public class PackageUtil {
       existingDependency = newDependency;
     }
     OBDal.getInstance().save(existingDependency);
+  }
+
+  /**
+   * Splits the provided version range string into a two-element array.
+   *
+   * @param versionRange The version range string to split.
+   * @return A two-element array with the start and end versions.
+   */
+  public static String[] splitCoreVersionRange(String versionRange) {
+    String cleanedRange = versionRange.replaceAll("[\\[\\]()]", "");
+    String[] versionSplit = cleanedRange.split(",");
+    if (versionSplit.length != 2) throw new IllegalArgumentException(OBMessageUtils.messageBD("ETDEP_Invalid_Version_Range_Format") + versionRange);
+    return versionSplit;
+  }
+
+  /**
+   * Finds the core version for a specified package version ID.
+   *
+   * @param packageVersionId The package version ID to search for.
+   * @return The core version string or null if not found.
+   */
+  public static String findCoreVersions(String packageVersionId) {
+    OBCriteria<PackageDependency> criteria = OBDal.getInstance().createCriteria(PackageDependency.class);
+    criteria.add(Restrictions.eq(ARTIFACT, ETENDO_CORE));
+    criteria.add(Restrictions.eq(PACKAGE_VERSION_ID, packageVersionId));
+    PackageDependency dep = (PackageDependency) criteria.setMaxResults(1).uniqueResult();
+
+    return dep != null ? dep.getVersion() : null;
   }
 }

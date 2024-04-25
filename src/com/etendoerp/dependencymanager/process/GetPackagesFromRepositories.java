@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * This process updates the packages and package versions from the GitHub API.
  */
-public class UpdatePackages extends DalBaseProcess {
+public class GetPackagesFromRepositories extends DalBaseProcess {
     private static final Logger log = LogManager.getLogger();
     private static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String LOCATION_HEADER = "Location";
@@ -150,9 +150,9 @@ public class UpdatePackages extends DalBaseProcess {
         String name = (String) pkg.get(NAME);
 
         if (!isPackageExcluded(name)) {
-            String[] parts = name.split("\\.");
-            String group = parts[0] + "." + parts[1];
-            String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
+        String[] parts = name.split("\\.");
+        String group = parts[0] + "." + parts[1];
+        String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
 
             Package res = findOrCreatePackage(group, artifact);
 
@@ -252,7 +252,21 @@ public class UpdatePackages extends DalBaseProcess {
      */
     private void processPackageVersion(Map<String, Object> version, Package pkg) {
         String versionName = (String) version.get(NAME);
-        findOrCreatePackageVersion(pkg, versionName);
+        PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
+
+        if (!PackageUtil.ETENDO_CORE.equals(pkg.getArtifact()) && !isPackageExcluded(pkg.getArtifact())) {
+            String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
+
+            if (coreVersionRange != null && !coreVersionRange.isEmpty()) {
+                String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
+                pkgVersion.setFromCore(coreVersionSplit[0]);
+                pkgVersion.setLatestCore(coreVersionSplit[1]);
+
+                OBDal.getInstance().save(pkgVersion);
+            }
+        } else {
+            log.debug("Skipping core or excluded package for version setting: {}", pkg.getArtifact());
+        }
     }
 
     /**
@@ -274,9 +288,16 @@ public class UpdatePackages extends DalBaseProcess {
             .count() == 0) {
 
             String pomUrl = buildPomUrl(group, artifact, versionName);
-            String pomXml = fetchPomXml(pomUrl);
-            if(pomXml != null) {
-                processPomXml(pomXml, pkgVersion);
+            log.debug("Fetching POM XML from {}", pomUrl);
+            try {
+                String pomXml = fetchPomXml(pomUrl);
+                if (pomXml != null) {
+                    processPomXml(pomXml, pkgVersion);
+                } else {
+                    log.error("No POM XML found or failed to fetch POM XML for URL: {}", pomUrl);
+                }
+            } catch (Exception e) {
+                log.error("Error fetching or processing POM XML for URL: {}", pomUrl, e);
             }
         }
     }
@@ -298,6 +319,13 @@ public class UpdatePackages extends DalBaseProcess {
             pkgVersion = new PackageVersion();
             pkgVersion.setPackage(pkg);
             pkgVersion.setVersion(version);
+
+            String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
+            if (coreVersionRange != null && !coreVersionRange.isEmpty()) {
+                String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
+                pkgVersion.setFromCore(coreVersionSplit[0]);
+                pkgVersion.setLatestCore(coreVersionSplit[1]);
+            }
             OBDal.getInstance().save(pkgVersion);
         }
         return pkgVersion;
@@ -415,20 +443,19 @@ public class UpdatePackages extends DalBaseProcess {
      * @return
      * @throws Exception
      */
-    private String sendHttpRequest(String url) throws OBException {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(url))
-                .header(AUTHORIZATION_HEADER, this._auth)
-                .version(HttpClient.Version.HTTP_2)
-                .GET()
-                .build();
-            HttpResponse<String> response = httpClient.send(request,
-                HttpResponse.BodyHandlers.ofString());
+    private String sendHttpRequest(String url) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(new URI(url))
+            .header(AUTHORIZATION_HEADER, this._auth)
+            .version(HttpClient.Version.HTTP_2)
+            .GET()
+            .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return response.body();
-        } catch (Exception e) {
-            Thread.currentThread().interrupt();
-            throw new OBException("Failed to send HTTP request", e);
+        } else {
+            log.error("HTTP Request failed with status code: " + response.statusCode() + " and body: " + response.body());
+            throw new OBException("HTTP Request failed with status code: " + response.statusCode());
         }
     }
 
@@ -439,28 +466,28 @@ public class UpdatePackages extends DalBaseProcess {
      * @return
      * @throws Exception
      */
-    private HttpResponse<String> sendHttpRequestWithRedirect(String url) throws OBException {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                .uri(new URI(url))
+    private HttpResponse<String> sendHttpRequestWithRedirect(String url) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(new URI(url))
+            .header(AUTHORIZATION_HEADER, this._auth)
+            .version(HttpClient.Version.HTTP_2)
+            .GET()
+            .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 302) {
+            String newUrl = response.headers().firstValue(LOCATION_HEADER).orElseThrow(() -> new OBException("Redirect URL not found in the response"));
+            request = HttpRequest.newBuilder()
+                .uri(new URI(newUrl))
                 .header(AUTHORIZATION_HEADER, this._auth)
-                .version(HttpClient.Version.HTTP_2)
                 .GET()
                 .build();
-            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 302) {
-                request = HttpRequest.newBuilder()
-                    .uri(new URI(response.headers().firstValue(LOCATION_HEADER).orElseThrow()))
-                    .headers(AUTHORIZATION_HEADER, this._auth)
-                    .version(HttpClient.Version.HTTP_2)
-                    .GET()
-                    .build();
-                response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            }
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        }
+        if (response.statusCode() >= 200 && response.statusCode() < 300) {
             return response;
-        } catch (Exception e) {
-            Thread.currentThread().interrupt();
-            throw new OBException("Failed to send HTTP request with redirect", e);
+        } else {
+            log.error("Redirected HTTP Request failed with status code: " + response.statusCode() + " and body: " + response.body());
+            throw new OBException("Redirected HTTP Request failed with status code: " + response.statusCode());
         }
     }
 }
