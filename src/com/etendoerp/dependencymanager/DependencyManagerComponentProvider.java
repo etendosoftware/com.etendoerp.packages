@@ -17,7 +17,8 @@ public class DependencyManagerComponentProvider extends BaseComponentProvider {
   protected static final String[] JS_FILES = new String[]{
       "uninstallDependencyWarnings.js",
       "changeVersionDropdown.js",
-      "changeFormat.js"
+      "changeFormat.js",
+      "dependenciesStatusField.js"
   };
   protected static final String ETDEP_COMPONENT = "ETDEP_DependencyManagerComponentProvider";
 

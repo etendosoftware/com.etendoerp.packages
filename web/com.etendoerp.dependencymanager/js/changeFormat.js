@@ -71,11 +71,11 @@ OB.ETDEP.ChangeFormat.onChange = function (item, view, form) {
       { records: selectedRecords },
       {},
       function (response, data, request) {
-        message = data.message + "</br>" + message;
-        if (data.dependencies != null) {
+        message = (data.message)? data.message + "</br>" : "" + message;
+        if (data.dependencies != null && messageType != "success") {
             messageType = 'warning';
+            view.messageBar.setMessage(messageType, messageType.toUpperCase(), message)
         }
-        view.messageBar.setMessage(messageType, messageType.toUpperCase(), message)
       }
     );
   }

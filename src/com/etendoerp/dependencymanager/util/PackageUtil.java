@@ -83,6 +83,30 @@ public class PackageUtil {
   }
 
   /**
+   * Retrieves the latest version of a given package.
+   *
+   * @param depPackage The package for which to retrieve the latest version.
+   * @return The latest PackageVersion object for the specified package.
+   */
+  public static PackageVersion getLastPackageVersion(Package depPackage) {
+    return OBDal.getInstance()
+        .createQuery(PackageVersion.class, "as pv where pv.package.id = :packageId order by etdep_split_string1(pv.version) desc, etdep_split_string2(pv.version) desc, etdep_split_string3(pv.version) desc")
+        .setNamedParameter("packageId", depPackage.getId())
+        .setMaxResult(1)
+        .uniqueResult();
+  }
+
+  /**
+   * Checks if the provided version string follows the Major.Minor.Patch semantic versioning format.
+   *
+   * @param version The version string to check.
+   * @return true if the version string follows the Major.Minor.Patch format, false otherwise.
+   */
+  public static boolean isMajorMinorPatchVersion (String version) {
+    return version.matches("^\\d(\\.\\d)?(\\.\\d)?$");
+  }
+
+  /**
    * Retrieves the package version based on the specified package and version.
    *
    * @param depPackage
@@ -91,7 +115,7 @@ public class PackageUtil {
    *     The version of the package to retrieve.
    * @return The PackageVersion object corresponding to the specified package and version, or null if not found.
    */
-  private static PackageVersion getPackageVersion(Package depPackage, String version) {
+  public static PackageVersion getPackageVersion(Package depPackage, String version) {
     OBCriteria<PackageVersion> packageVersionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);
     packageVersionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, depPackage));
     packageVersionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_VERSION, version));
