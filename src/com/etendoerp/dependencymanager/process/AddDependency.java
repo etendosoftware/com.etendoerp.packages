@@ -71,6 +71,7 @@ public class AddDependency extends BaseActionHandler {
           dependency.setInstallationStatus(DEFAULT_INSTALLATION_STATUS);
           if (packageDependency.isExternalDependency().booleanValue()) {
             dependency.setFormat(JAR_FORTMAT);
+            dependency.setExternalDependency(true);
           } else {
             dependency.setFormat(SOURCE_FORTMAT);
           }
