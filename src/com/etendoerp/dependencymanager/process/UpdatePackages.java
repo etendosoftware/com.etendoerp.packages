@@ -93,7 +93,7 @@ public class UpdatePackages extends DalBaseProcess {
                 try {
                     processPackageDependency(pkg);
                 } catch (Exception e) {
-                    log.error("Failed to process package", e);
+                    log.error("Failed to process package dependency ", e.getMessage());
                 }
             }
         }
