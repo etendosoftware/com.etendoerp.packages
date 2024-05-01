@@ -49,6 +49,8 @@ public class UpdatePackages extends DalBaseProcess {
     private static final List<String> EXCLUDED_PACKAGES = Arrays.asList(
         "com.etendoerp.platform.etendo-core", "com.etendoerp.gradleplugin",
         "com.etendoerp.gradleplugin.com.etendoerp.gradleplugin.gradle.plugin");
+    private static final List<String> EXCLUDED_REPOSITORIES = Arrays.asList(
+        "com.etendoerp.public.jars");
 
     /**
      * This method is called when the process is executed.
@@ -93,7 +95,7 @@ public class UpdatePackages extends DalBaseProcess {
                 try {
                     processPackageDependency(pkg);
                 } catch (Exception e) {
-                    log.error("Failed to process package dependency ", e.getMessage());
+                    log.error("Failed to process package dependency - ERROR: {}", e.getMessage());
                 }
             }
         }
@@ -151,10 +153,10 @@ public class UpdatePackages extends DalBaseProcess {
      * @throws Exception
      */
     private void processPackage(Map<String, Object> pkg) throws Exception {
-        log.debug("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
+        log.debug("Processing package: {}", name);
 
-        if (!isPackageExcluded(name)) {
+        if (!isPackageExcluded(pkg)) {
             String[] parts = name.split("\\.");
             String group = parts[0] + "." + parts[1];
             String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
@@ -179,10 +181,10 @@ public class UpdatePackages extends DalBaseProcess {
      * @throws Exception If an error occurs during processing.
      */
     private void processPackageDependency(Map<String, Object> pkg) throws Exception {
-        log.debug("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
+        log.debug("Processing package: {}", name);
 
-        if (!isPackageExcluded(name)) {
+        if (!isPackageExcluded(pkg)) {
             String[] parts = name.split("\\.");
             String group = parts[0] + "." + parts[1];
             String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
@@ -202,17 +204,18 @@ public class UpdatePackages extends DalBaseProcess {
      * Checks if a given package name or group should be excluded based on its name or prefix.
      * Excluded packages are not processed or shown in the module management window (core, plugins, or rx packages).
      *
-     * @param packageName The full name of the package to check for exclusion.
+     * @param pkg The package to check for exclusion.
      * @return true if the package is to be excluded, false otherwise.
      */
-    private boolean isPackageExcluded(String packageName) {
+    private boolean isPackageExcluded(Map<String, Object> pkg) {
+        String packageName = (String) pkg.get(NAME);
         for (String prefix : EXCLUDED_PACKAGE_PREFIXES) {
             if (StringUtils.startsWith(packageName, prefix)) {
                 return true;
             }
         }
-
-        return EXCLUDED_PACKAGES.contains(packageName);
+        Map<String, Object> repository = (Map<String, Object>) pkg.get("repository");
+        return EXCLUDED_PACKAGES.contains(packageName) || EXCLUDED_REPOSITORIES.contains(repository.get(NAME));
     }
 
     /**
@@ -395,23 +398,28 @@ public class UpdatePackages extends DalBaseProcess {
             dep.setGroup(group);
             dep.setArtifact(artifact);
             dep.setVersion(version);
-            OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
-            packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
-            packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
-            Package pkge = (Package) packageCriteria.setMaxResults(1).uniqueResult();
-            if (!StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
-                dep.setExternalDependency(true);
-            }
-            if (pkge != null) {
-                PackageVersion packageVersion;
-                if (!PackageUtil.isMajorMinorPatchVersion(version)) {
-                    packageVersion = PackageUtil.getLastPackageVersion(pkge);
-                } else {
-                    packageVersion = PackageUtil.getPackageVersion(pkge, version);
-                }
-                if (packageVersion != null) {
+            dep.setExternalDependency(false);
+            if (StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
+                dep.setDependencyVersion(null);
+            } else {
+                OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
+                packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
+                packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
+                Package dependencyPackage = (Package) packageCriteria.setMaxResults(1).uniqueResult();
+                if (dependencyPackage != null) {
+                    PackageVersion packageVersion;
+                    if (!PackageUtil.isMajorMinorPatchVersion(version)) {
+                        packageVersion = PackageUtil.getLastPackageVersion(dependencyPackage);
+                    } else {
+                        packageVersion = PackageUtil.getPackageVersion(dependencyPackage, version);
+                    }
                     dep.setDependencyVersion(packageVersion);
-                    dep.setExternalDependency(false);
+                    if (packageVersion == null) {
+                        dep.setExternalDependency(true);
+                    }
+                } else {
+                    dep.setDependencyVersion(null);
+                    dep.setExternalDependency(true);
                 }
             }
             OBDal.getInstance().save(dep);

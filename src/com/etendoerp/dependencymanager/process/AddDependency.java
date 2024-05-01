@@ -32,6 +32,7 @@ import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
 
+import com.etendoerp.dependencymanager.actions.InstallDependency;
 import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
@@ -75,6 +76,29 @@ public class AddDependency extends BaseActionHandler {
           } else {
             dependency.setFormat(SOURCE_FORTMAT);
           }
+          PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+          String versionStatus = InstallDependency.determineVersionStatus(packageDependency.getVersion(), latestPackageVersion.getVersion());
+          dependency.setVersionStatus(versionStatus);
+          needFlush = true;
+          OBDal.getInstance().save(dependency);
+        }
+
+        if (!packageVersion.getPackage().isBundle()) {
+          Dependency dependency = new Dependency();
+          dependency.setVersion(packageVersion.getVersion());
+          dependency.setGroup(packageVersion.getPackage().getGroup());
+          dependency.setArtifact(packageVersion.getPackage().getArtifact());
+          dependency.setInstallationStatus(DEFAULT_INSTALLATION_STATUS);
+          if (dependencyList.isEmpty()) {
+            dependency.setFormat(JAR_FORTMAT);
+            dependency.setExternalDependency(true);
+          } else {
+            dependency.setFormat(SOURCE_FORTMAT);
+          }
+          PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+          String versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(), latestPackageVersion.getVersion());
+          dependency.setVersionStatus(versionStatus);
+
           needFlush = true;
           OBDal.getInstance().save(dependency);
         }
@@ -89,14 +113,14 @@ public class AddDependency extends BaseActionHandler {
       errorMessage.put(MESSAGE, message);
       OBDal.getInstance().flush();
       errorMessage.put("refreshParent", true);
-    } catch (JSONException jsone) {
+    } catch (JSONException json) {
       try {
         JSONObject message = new JSONObject();
         message.put(SEVERITY, "error");
         message.put(TITLE, "Error");
         errorMessage.put(MESSAGE, message);
       } catch (JSONException ignore) {
-        log.error(jsone);
+        log.error(json);
       }
     } finally {
       OBContext.restorePreviousMode();

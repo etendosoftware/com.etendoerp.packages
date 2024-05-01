@@ -27,11 +27,12 @@ public class UpdateLocalPackagesUtil {
   public static final String ID = "id";
   public static final String ACTIVE = "active";
   public static final String GROUP = "group";
+  public static final String ISBUNDLE = "isBundle";
   public static final String ARTIFACT = "artifact";
   public static final String VERSION = "version";
-  public static final String INSTALL = "install";
+  public static final String EXTERNAL_DEPENDENCY = "externalDependency";
+  public static final String DEPENDENCY_VERSION = "dependencyVersion";
   public static final String DEPGROUP = "depgroup";
-
   public static final String DATASET_FILE_URL = "https://raw.githubusercontent.com/etendosoftware/com.etendoerp.dependencymanager/main/referencedata/standard/Packages_dataset.xml";
 
   private UpdateLocalPackagesUtil() {
@@ -41,17 +42,19 @@ public class UpdateLocalPackagesUtil {
    * This method is overridden from the DalBaseProcess class.
    * It reads an XML file and processes its elements to update local packages, versions, and dependencies.
    *
-   * @param bundle The ProcessBundle object passed to this method.
    * @throws Exception If an error occurs during the execution of the method.
    */
   public static void update() throws IOException {
-    OBContext.setAdminMode(true);
-    File dataSetFile = downloadFile(DATASET_FILE_URL);
-    var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
-    processPackages(xmlRootElement);
-    processPackageVersions(xmlRootElement);
-    processPackageDependencies(xmlRootElement);
-    OBContext.restorePreviousMode();
+    try {
+      OBContext.setAdminMode(true);
+      File dataSetFile = downloadFile(DATASET_FILE_URL);
+      var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
+      processPackages(xmlRootElement);
+      processPackageVersions(xmlRootElement);
+      processPackageDependencies(xmlRootElement);
+    } finally {
+      OBContext.restorePreviousMode();
+    }
   }
 
   private static File downloadFile(String fileUrl) throws IOException {
@@ -83,6 +86,8 @@ public class UpdateLocalPackagesUtil {
       pkg.setArtifact(packageElement.elementText(ARTIFACT));
       pkg.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
+      pkg.setBundle(
+          BooleanUtils.toBooleanObject(packageElement.elementText(ISBUNDLE)));
       OBDal.getInstance().save(pkg);
     }
     OBDal.getInstance().flush();
@@ -106,8 +111,6 @@ public class UpdateLocalPackagesUtil {
       packageVersion.setPackage(OBDal.getInstance()
           .get(Package.class, packageElement.element(ETDEP_PACKAGE_TAG).attributeValue(ID)));
       packageVersion.setVersion(packageElement.elementText(VERSION));
-      packageVersion.setAddDependency(
-          BooleanUtils.toBooleanObject(packageElement.elementText(INSTALL)));
       packageVersion.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
       OBDal.getInstance().save(packageVersion);
@@ -138,6 +141,10 @@ public class UpdateLocalPackagesUtil {
       pkgDep.setVersion(packageElement.elementText(VERSION));
       pkgDep.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
+      pkgDep.setExternalDependency(
+          BooleanUtils.toBooleanObject(packageElement.elementText(EXTERNAL_DEPENDENCY)));
+      PackageVersion dependencyVersion = OBDal.getInstance().get(PackageVersion.class, packageElement.elementText(DEPENDENCY_VERSION));
+      pkgDep.setDependencyVersion(dependencyVersion);
       OBDal.getInstance().save(pkgDep);
     }
     OBDal.getInstance().flush();
