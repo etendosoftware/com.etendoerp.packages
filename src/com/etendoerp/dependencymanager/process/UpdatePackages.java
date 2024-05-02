@@ -399,13 +399,13 @@ public class UpdatePackages extends DalBaseProcess {
             dep.setArtifact(artifact);
             dep.setVersion(version);
             dep.setExternalDependency(false);
-            if (StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
-                dep.setDependencyVersion(null);
-            } else {
+            dep.setDependencyVersion(null);
+            if (!StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
                 OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
                 packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
                 packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
                 Package dependencyPackage = (Package) packageCriteria.setMaxResults(1).uniqueResult();
+                dep.setExternalDependency(true);
                 if (dependencyPackage != null) {
                     PackageVersion packageVersion;
                     if (!PackageUtil.isMajorMinorPatchVersion(version)) {
@@ -414,12 +414,9 @@ public class UpdatePackages extends DalBaseProcess {
                         packageVersion = PackageUtil.getPackageVersion(dependencyPackage, version);
                     }
                     dep.setDependencyVersion(packageVersion);
-                    if (packageVersion == null) {
-                        dep.setExternalDependency(true);
+                    if (packageVersion != null) {
+                        dep.setExternalDependency(false);
                     }
-                } else {
-                    dep.setDependencyVersion(null);
-                    dep.setExternalDependency(true);
                 }
             }
             OBDal.getInstance().save(dep);

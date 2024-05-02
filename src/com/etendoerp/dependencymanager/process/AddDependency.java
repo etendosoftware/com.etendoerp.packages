@@ -83,25 +83,7 @@ public class AddDependency extends BaseActionHandler {
           OBDal.getInstance().save(dependency);
         }
 
-        if (!packageVersion.getPackage().isBundle()) {
-          Dependency dependency = new Dependency();
-          dependency.setVersion(packageVersion.getVersion());
-          dependency.setGroup(packageVersion.getPackage().getGroup());
-          dependency.setArtifact(packageVersion.getPackage().getArtifact());
-          dependency.setInstallationStatus(DEFAULT_INSTALLATION_STATUS);
-          if (dependencyList.isEmpty()) {
-            dependency.setFormat(JAR_FORTMAT);
-            dependency.setExternalDependency(true);
-          } else {
-            dependency.setFormat(SOURCE_FORTMAT);
-          }
-          PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
-          String versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(), latestPackageVersion.getVersion());
-          dependency.setVersionStatus(versionStatus);
-
-          needFlush = true;
-          OBDal.getInstance().save(dependency);
-        }
+        needFlush |= addVersionToIntall(packageVersion, dependencyList);
         if (needFlush) {
           OBDal.getInstance().flush();
         }
@@ -126,5 +108,42 @@ public class AddDependency extends BaseActionHandler {
       OBContext.restorePreviousMode();
     }
     return errorMessage;
+  }
+
+  /**
+   * This method is used to add a version to install.
+   * It creates a new Dependency object and sets its properties based on the provided PackageVersion and DependencyList.
+   * If the DependencyList is empty, the format of the dependency is set to JAR_FORMAT and it is marked as an external dependency.
+   * Otherwise, the format is set to SOURCE_FORMAT.
+   * The method then retrieves the latest PackageVersion of the package, determines the version status, and sets it on the dependency.
+   * The dependency is then saved using OBDal's save method.
+   * If the package version's package is not null and is not a bundle, the method returns true indicating that a flush is needed.
+   * Otherwise, it returns false.
+   *
+   * @param packageVersion The package version to add.
+   * @param dependencyList The list of dependencies of the package version.
+   * @return A boolean indicating whether a flush is needed.
+   */
+  private boolean addVersionToIntall(PackageVersion packageVersion, List<PackageDependency> dependencyList) {
+    boolean needFlush = false;
+    if (packageVersion.getPackage() != null && !packageVersion.getPackage().isBundle().booleanValue()) {
+      Dependency dependency = new Dependency();
+      dependency.setVersion(packageVersion.getVersion());
+      dependency.setGroup(packageVersion.getPackage().getGroup());
+      dependency.setArtifact(packageVersion.getPackage().getArtifact());
+      dependency.setInstallationStatus(DEFAULT_INSTALLATION_STATUS);
+      if (dependencyList.isEmpty()) {
+        dependency.setFormat(JAR_FORTMAT);
+        dependency.setExternalDependency(true);
+      } else {
+        dependency.setFormat(SOURCE_FORTMAT);
+      }
+      PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+      String versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(), latestPackageVersion.getVersion());
+      dependency.setVersionStatus(versionStatus);
+      OBDal.getInstance().save(dependency);
+      needFlush = true;
+    }
+    return needFlush;
   }
 }

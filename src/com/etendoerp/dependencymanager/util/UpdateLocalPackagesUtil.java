@@ -48,10 +48,14 @@ public class UpdateLocalPackagesUtil {
     try {
       OBContext.setAdminMode(true);
       File dataSetFile = downloadFile(DATASET_FILE_URL);
-      var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
-      processPackages(xmlRootElement);
-      processPackageVersions(xmlRootElement);
-      processPackageDependencies(xmlRootElement);
+      try (FileInputStream fileInputStream = new FileInputStream(dataSetFile)) {
+        var xmlRootElement = XMLUtil.getInstance().getRootElement(fileInputStream);
+        processPackages(xmlRootElement);
+        processPackageVersions(xmlRootElement);
+        processPackageDependencies(xmlRootElement);
+      } catch (Exception e) {
+        throw new IOException("Error when updating packages", e);
+      }
     } finally {
       OBContext.restorePreviousMode();
     }
