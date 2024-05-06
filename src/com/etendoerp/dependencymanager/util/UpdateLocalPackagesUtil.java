@@ -57,6 +57,8 @@ public class UpdateLocalPackagesUtil {
       processPackageDependencies(xmlRootElement);
     } catch (Exception e) {
       log.error(UpdateLocalPackagesUtil.class.getName(), e);
+    } finally {
+      OBContext.restorePreviousMode();
     }
   }
 
