@@ -1,9 +1,13 @@
 package com.etendoerp.dependencymanager.util;
+
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
@@ -15,6 +19,7 @@ import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+
 public class PackageUtil {
   // Constants
   private static final Logger log = LogManager.getLogger();
@@ -197,7 +202,7 @@ public class PackageUtil {
         .setNamedParameter(ARTIFACT, artifact)
         .uniqueResult();
 
-    String latestVersion = InstallDependency.fetchLatestVersion(group, artifact);
+    String latestVersion = getLastPackageVersionFromDB(group, artifact);
     String versionStatus = InstallDependency.determineVersionStatus(version, latestVersion);
 
     if (existingDependency != null) {
@@ -212,6 +217,28 @@ public class PackageUtil {
       existingDependency = newDependency;
     }
     OBDal.getInstance().save(existingDependency);
+  }
+
+  /**
+   * Fetches the latest package version from the database using OBCriteria.
+   *
+   * @param group The group of the package.
+   * @param artifact The artifact of the package.
+   * @return The latest version string or null if no versions are found.
+   */
+  private static String getLastPackageVersionFromDB(String group, String artifact) {
+    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    criteria.createAlias("package", "pkg");
+    criteria.add(Restrictions.eq("pkg.artifact", artifact));
+    criteria.add(Restrictions.eq("pkg.group", group));
+    criteria.addOrder(Order.desc("version"));
+    criteria.setMaxResults(1);
+
+    List<PackageVersion> packageVersions = criteria.list();
+    if (!packageVersions.isEmpty()) {
+      return packageVersions.get(0).getVersion();
+    }
+    return null;
   }
 
   /**

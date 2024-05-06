@@ -257,7 +257,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
         if (!PackageUtil.ETENDO_CORE.equals(pkg.getArtifact()) && !isPackageExcluded(pkg.getArtifact())) {
             String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
 
-            if (coreVersionRange != null && !coreVersionRange.isEmpty()) {
+            if (coreVersionRange != null) {
                 String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
                 pkgVersion.setFromCore(coreVersionSplit[0]);
                 pkgVersion.setLatestCore(coreVersionSplit[1]);
@@ -321,7 +321,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
             pkgVersion.setVersion(version);
 
             String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
-            if (coreVersionRange != null && !coreVersionRange.isEmpty()) {
+            if (coreVersionRange != null) {
                 String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
                 pkgVersion.setFromCore(coreVersionSplit[0]);
                 pkgVersion.setLatestCore(coreVersionSplit[1]);

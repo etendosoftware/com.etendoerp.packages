@@ -4,6 +4,8 @@ import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
 import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
@@ -19,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 
 public class UpdateLocalPackagesUtil {
 
+  private static final Logger log = LogManager.getLogger();
   public static final String ETDEP_PACKAGE = "ETDEP_Package";
   public static final String ETDEP_PACKAGE_VERSION = "ETDEP_Package_Version";
   public static final String ETDEP_PACKAGE_DEPENDENCY = "ETDEP_Package_Dependency";
@@ -46,12 +49,15 @@ public class UpdateLocalPackagesUtil {
    */
   public static void update() throws IOException {
     OBContext.setAdminMode(true);
-    File dataSetFile = downloadFile(DATASET_FILE_URL);
-    var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
-    processPackages(xmlRootElement);
-    processPackageVersions(xmlRootElement);
-    processPackageDependencies(xmlRootElement);
-    OBContext.restorePreviousMode();
+    try {
+      File dataSetFile = downloadFile(DATASET_FILE_URL);
+      var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
+      processPackages(xmlRootElement);
+      processPackageVersions(xmlRootElement);
+      processPackageDependencies(xmlRootElement);
+    } catch (Exception e) {
+      log.error(UpdateLocalPackagesUtil.class.getName(), e);
+    }
   }
 
   private static File downloadFile(String fileUrl) throws IOException {
