@@ -48,8 +48,8 @@ public class UpdateLocalPackagesUtil {
    * @throws Exception If an error occurs during the execution of the method.
    */
   public static void update() throws IOException {
-    OBContext.setAdminMode(true);
     try {
+      OBContext.setAdminMode(true);
       File dataSetFile = downloadFile(DATASET_FILE_URL);
       var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
       processPackages(xmlRootElement);

@@ -231,7 +231,7 @@ public class PackageUtil {
     criteria.createAlias("package", "pkg");
     criteria.add(Restrictions.eq("pkg.artifact", artifact));
     criteria.add(Restrictions.eq("pkg.group", group));
-    criteria.addOrder(Order.desc("version"));
+    criteria.addOrder(Order.desc(VERSION));
     criteria.setMaxResults(1);
 
     List<PackageVersion> packageVersions = criteria.list();

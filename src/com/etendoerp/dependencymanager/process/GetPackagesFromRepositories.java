@@ -254,7 +254,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
         String versionName = (String) version.get(NAME);
         PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
 
-        if (!PackageUtil.ETENDO_CORE.equals(pkg.getArtifact()) && !isPackageExcluded(pkg.getArtifact())) {
+        if (!StringUtils.equals(PackageUtil.ETENDO_CORE, pkg.getArtifact()) && !isPackageExcluded(pkg.getArtifact())) {
             String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
 
             if (coreVersionRange != null) {
