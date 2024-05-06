@@ -35,9 +35,9 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String LOCATION_HEADER = "Location";
     private static final String BASIC_AUTH_TOKEN = "Basic ";
-    private static final String GITHUB_API_URL = "https://deps.labs.etendo.cloud/api/v1/packages?page=";
-    private static final String GITHUB_VERSIONS_API_URL = "https://deps.labs.etendo.cloud/api/v1/packages/maven/";
-    private static final String GITHUB_POM_URL = "https://deps.labs.etendo.cloud/api/v1/pom/";
+    private static final String GITHUB_API_URL = "https://api.github.com/orgs/etendosoftware/packages?package_type=maven&per_page=100&page=";
+    private static final String GITHUB_VERSIONS_API_URL = "https://api.github.com/orgs/etendosoftware/packages/maven/";
+    private static final String GITHUB_POM_URL = "https://maven.pkg.github.com/etendosoftware/etendo_core/";
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     private static final ObjectMapper objectMapper = new ObjectMapper();
     public static final String GITHUB_USER = "githubUser";
@@ -64,8 +64,13 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
         // Base64 Basic Auth token
         this._auth = BASIC_AUTH_TOKEN + Base64.getEncoder()
             .encodeToString((githubUser + ":" + githubToken).getBytes());
-        processPackagesAndVersions();
-        processDependencies();
+        try {
+            processPackagesAndVersions();
+            processDependencies();
+        } catch (Exception e) {
+            log.error("Failed to process packages", e);
+            bundle.getLogger().logln("Failed to process packages "+ e.getMessage());
+        }
     }
 
     /**
@@ -88,7 +93,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
                 try {
                     processPackageDependency(pkg);
                 } catch (Exception e) {
-                    log.error("Failed to process package", e);
+                    log.error("Failed to process package dependency ", e.getMessage());
                 }
             }
         }

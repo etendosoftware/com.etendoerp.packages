@@ -14,7 +14,13 @@ import org.openbravo.client.kernel.ComponentProvider;
 @ApplicationScoped
 @ComponentProvider.Qualifier(DependencyManagerComponentProvider.ETDEP_COMPONENT)
 public class DependencyManagerComponentProvider extends BaseComponentProvider {
-  public static final String ETDEP_COMPONENT = "ETDEP_DependencyManagerComponentProvider";
+  protected static final String[] JS_FILES = new String[]{
+      "uninstallDependencyWarnings.js",
+      "changeVersionDropdown.js",
+      "changeFormat.js",
+      "dependenciesStatusField.js"
+  };
+  protected static final String ETDEP_COMPONENT = "ETDEP_DependencyManagerComponentProvider";
 
   @Override
   public Component getComponent(String componentId, Map<String, Object> parameters) {
@@ -25,9 +31,9 @@ public class DependencyManagerComponentProvider extends BaseComponentProvider {
   public List<ComponentResource> getGlobalComponentResources() {
     final GlobalResourcesHelper grhelper = new GlobalResourcesHelper();
     // Add all the javascript source files needed in our module
-    grhelper.addERP("uninstallDependencyWarnings.js");
-    grhelper.addERP("changeVersionDropdown.js");
-    grhelper.addERP("dependenciesStatusField.js");
+    for (String file : JS_FILES) {
+      grhelper.addERP(file);
+    }
     return grhelper.getGlobalResources();
   }
 
