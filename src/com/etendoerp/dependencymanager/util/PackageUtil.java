@@ -103,7 +103,7 @@ public class PackageUtil {
    * @return true if the version string follows the Major.Minor.Patch format, false otherwise.
    */
   public static boolean isMajorMinorPatchVersion (String version) {
-    return version.matches("^\\d(\\.\\d)?(\\.\\d)?$");
+    return version.matches("^\\d+(\\.\\d+)?(\\.\\d+)?$");
   }
 
   /**
