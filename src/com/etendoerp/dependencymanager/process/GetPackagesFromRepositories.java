@@ -262,12 +262,24 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
         String versionName = (String) version.get(NAME);
         PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
 
-        String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
-        if (coreVersionRange != null) {
-            String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
-            pkgVersion.setFromCore(coreVersionSplit[0]);
-            pkgVersion.setLatestCore(coreVersionSplit[1]);
-            OBDal.getInstance().save(pkgVersion);
+        if (pkgVersion.getFromCore() == null || pkgVersion.getLatestCore() == null) {
+            assignCoreVersionFromPrevious(pkgVersion, pkg);
+        }
+
+        OBDal.getInstance().save(pkgVersion);
+    }
+
+    private void assignCoreVersionFromPrevious(PackageVersion currentPkgVersion, Package pkg) {
+        List<PackageVersion> previousVersions = OBDal.getInstance()
+            .createQuery(PackageVersion.class, "e where e.package.id = :packageId and e.version < :currentVersion order by e.version desc")
+            .setNamedParameter("packageId", pkg.getId())
+            .setNamedParameter("currentVersion", currentPkgVersion.getVersion())
+            .list();
+
+        if (!previousVersions.isEmpty()) {
+            PackageVersion previousPkgVersion = previousVersions.get(0);
+            currentPkgVersion.setFromCore(previousPkgVersion.getFromCore());
+            currentPkgVersion.setLatestCore(previousPkgVersion.getLatestCore());
         }
     }
 
@@ -330,13 +342,8 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
             pkgVersion.setPackage(pkg);
             pkgVersion.setVersion(version);
 
-            // Establecer los campos From Core y To Core
-            String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
-            if (coreVersionRange != null) {
-                String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
-                pkgVersion.setFromCore(coreVersionSplit[0]);
-                pkgVersion.setLatestCore(coreVersionSplit[1]);
-            }
+            assignCoreVersionFromPrevious(pkgVersion, pkg);
+
             OBDal.getInstance().save(pkgVersion);
         }
         return pkgVersion;
