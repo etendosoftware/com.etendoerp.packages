@@ -115,8 +115,8 @@
 <!--FE1C3952DDBB4B3D8F048A11A603A9D7-->  <HQLQUERY><![CDATA[SELECT
   e.id,
   e.packageVersion.id as Etdep_Package_Version_ID,
-  e.artifact as Artifact,
   e.group as Depgroup,
+  e.artifact as Artifact,
   e.version as Version
   @selectClause@
 MAINFROM

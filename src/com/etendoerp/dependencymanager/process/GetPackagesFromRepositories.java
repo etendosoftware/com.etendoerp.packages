@@ -49,6 +49,8 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     private static final List<String> EXCLUDED_PACKAGES = Arrays.asList(
         "com.etendoerp.platform.etendo-core", "com.etendoerp.gradleplugin",
         "com.etendoerp.gradleplugin.com.etendoerp.gradleplugin.gradle.plugin");
+    private static final List<String> EXCLUDED_REPOSITORIES = Arrays.asList(
+        "com.etendoerp.public.jars");
 
     /**
      * This method is called when the process is executed.
@@ -93,7 +95,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
                 try {
                     processPackageDependency(pkg);
                 } catch (Exception e) {
-                    log.error("Failed to process package dependency ", e.getMessage());
+                    log.error("Failed to process package dependency - ERROR: {}", e.getMessage());
                 }
             }
         }
@@ -151,13 +153,13 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
      * @throws Exception
      */
     private void processPackage(Map<String, Object> pkg) throws Exception {
-        log.debug("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
+        log.debug("Processing package: {}", name);
 
-        if (!isPackageExcluded(name)) {
-        String[] parts = name.split("\\.");
-        String group = parts[0] + "." + parts[1];
-        String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
+        if (!isPackageExcluded(pkg)) {
+            String[] parts = name.split("\\.");
+            String group = parts[0] + "." + parts[1];
+            String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
 
             Package res = findOrCreatePackage(group, artifact);
 
@@ -179,10 +181,10 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
      * @throws Exception If an error occurs during processing.
      */
     private void processPackageDependency(Map<String, Object> pkg) throws Exception {
-        log.debug("Processing package: {}", pkg.get(NAME));
         String name = (String) pkg.get(NAME);
+        log.debug("Processing package: {}", name);
 
-        if (!isPackageExcluded(name)) {
+        if (!isPackageExcluded(pkg)) {
             String[] parts = name.split("\\.");
             String group = parts[0] + "." + parts[1];
             String artifact = String.join(".", Arrays.copyOfRange(parts, 2, parts.length));
@@ -202,17 +204,18 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
      * Checks if a given package name or group should be excluded based on its name or prefix.
      * Excluded packages are not processed or shown in the module management window (core, plugins, or rx packages).
      *
-     * @param packageName The full name of the package to check for exclusion.
+     * @param pkg The package to check for exclusion.
      * @return true if the package is to be excluded, false otherwise.
      */
-    private boolean isPackageExcluded(String packageName) {
+    private boolean isPackageExcluded(Map<String, Object> pkg) {
+        String packageName = (String) pkg.get(NAME);
         for (String prefix : EXCLUDED_PACKAGE_PREFIXES) {
             if (StringUtils.startsWith(packageName, prefix)) {
                 return true;
             }
         }
-
-        return EXCLUDED_PACKAGES.contains(packageName);
+        Map<String, Object> repository = (Map<String, Object>) pkg.get("repository");
+        return EXCLUDED_PACKAGES.contains(packageName) || EXCLUDED_REPOSITORIES.contains(repository.get(NAME));
     }
 
     /**
@@ -259,18 +262,12 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
         String versionName = (String) version.get(NAME);
         PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
 
-        if (!StringUtils.equals(PackageUtil.ETENDO_CORE, pkg.getArtifact()) && !isPackageExcluded(pkg.getArtifact())) {
-            String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
-
-            if (coreVersionRange != null) {
-                String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
-                pkgVersion.setFromCore(coreVersionSplit[0]);
-                pkgVersion.setLatestCore(coreVersionSplit[1]);
-
-                OBDal.getInstance().save(pkgVersion);
-            }
-        } else {
-            log.debug("Skipping core or excluded package for version setting: {}", pkg.getArtifact());
+        String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
+        if (coreVersionRange != null) {
+            String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
+            pkgVersion.setFromCore(coreVersionSplit[0]);
+            pkgVersion.setLatestCore(coreVersionSplit[1]);
+            OBDal.getInstance().save(pkgVersion);
         }
     }
 
@@ -286,6 +283,14 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     private void processPackageDependencyVersion(Map<String, Object> version, Package pkg, String group, String artifact) {
         String versionName = (String) version.get(NAME);
         PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
+
+        String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
+        if (coreVersionRange != null) {
+            String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
+            pkgVersion.setFromCore(coreVersionSplit[0]);
+            pkgVersion.setLatestCore(coreVersionSplit[1]);
+            OBDal.getInstance().save(pkgVersion);
+        }
 
         if (OBDal.getInstance()
             .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId")
@@ -325,6 +330,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
             pkgVersion.setPackage(pkg);
             pkgVersion.setVersion(version);
 
+            // Establecer los campos From Core y To Core
             String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
             if (coreVersionRange != null) {
                 String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
@@ -418,23 +424,25 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
             dep.setGroup(group);
             dep.setArtifact(artifact);
             dep.setVersion(version);
-            OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
-            packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
-            packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
-            Package pkge = (Package) packageCriteria.setMaxResults(1).uniqueResult();
+            dep.setExternalDependency(false);
+            dep.setDependencyVersion(null);
             if (!StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
+                OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
+                packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
+                packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
+                Package dependencyPackage = (Package) packageCriteria.setMaxResults(1).uniqueResult();
                 dep.setExternalDependency(true);
-            }
-            if (pkge != null) {
-                PackageVersion packageVersion;
-                if (!PackageUtil.isMajorMinorPatchVersion(version)) {
-                    packageVersion = PackageUtil.getLastPackageVersion(pkge);
-                } else {
-                    packageVersion = PackageUtil.getPackageVersion(pkge, version);
-                }
-                if (packageVersion != null) {
+                if (dependencyPackage != null) {
+                    PackageVersion packageVersion;
+                    if (!PackageUtil.isMajorMinorPatchVersion(version)) {
+                        packageVersion = PackageUtil.getLastPackageVersion(dependencyPackage);
+                    } else {
+                        packageVersion = PackageUtil.getPackageVersion(dependencyPackage, version);
+                    }
                     dep.setDependencyVersion(packageVersion);
-                    dep.setExternalDependency(false);
+                    if (packageVersion != null) {
+                        dep.setExternalDependency(false);
+                    }
                 }
             }
             OBDal.getInstance().save(dep);

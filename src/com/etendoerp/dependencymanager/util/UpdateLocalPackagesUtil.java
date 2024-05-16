@@ -7,6 +7,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
+import org.openbravo.base.session.OBPropertiesProvider;
 import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.xml.XMLUtil;
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 
 public class UpdateLocalPackagesUtil {
 
@@ -25,17 +27,19 @@ public class UpdateLocalPackagesUtil {
   public static final String ETDEP_PACKAGE = "ETDEP_Package";
   public static final String ETDEP_PACKAGE_VERSION = "ETDEP_Package_Version";
   public static final String ETDEP_PACKAGE_DEPENDENCY = "ETDEP_Package_Dependency";
-  public static final String ETDEP_PACKAGE_TAG = "etdepPackage";
-  public static final String ETDEP_PACKAGE_VERSION_TAG = "etdepPackageVersion";
+  public static final String ETDEP_PACKAGE_TAG = "package";
+  public static final String ETDEP_PACKAGE_VERSION_TAG = "packageVersion";
   public static final String ID = "id";
   public static final String ACTIVE = "active";
   public static final String GROUP = "group";
   public static final String ARTIFACT = "artifact";
   public static final String VERSION = "version";
-  public static final String INSTALL = "install";
-  public static final String DEPGROUP = "depgroup";
+  public static final String EXTERNAL_DEPENDENCY = "externalDependency";
+  public static final String DEPENDENCY_VERSION = "dependencyVersion";
+  public static final String ISBUNDLE = "isBundle";
+  public static final String DATASET_FILE_URL = "https://raw.githubusercontent.com/etendosoftware/com.etendoerp.dependencymanager/<branch>/referencedata/standard/Packages_dataset.xml";
 
-  public static final String DATASET_FILE_URL = "https://raw.githubusercontent.com/etendosoftware/com.etendoerp.dependencymanager/main/referencedata/standard/Packages_dataset.xml";
+  private static final String BRANCH_LOCAL_PACKAGES_PROPERTY = "branch.update.local.packages";
 
   private UpdateLocalPackagesUtil() {
   }
@@ -44,19 +48,24 @@ public class UpdateLocalPackagesUtil {
    * This method is overridden from the DalBaseProcess class.
    * It reads an XML file and processes its elements to update local packages, versions, and dependencies.
    *
-   * @param bundle The ProcessBundle object passed to this method.
    * @throws Exception If an error occurs during the execution of the method.
    */
   public static void update() throws IOException {
     try {
       OBContext.setAdminMode(true);
-      File dataSetFile = downloadFile(DATASET_FILE_URL);
-      var xmlRootElement = XMLUtil.getInstance().getRootElement(new FileInputStream(dataSetFile));
-      processPackages(xmlRootElement);
-      processPackageVersions(xmlRootElement);
-      processPackageDependencies(xmlRootElement);
-    } catch (Exception e) {
-      log.error(UpdateLocalPackagesUtil.class.getName(), e);
+
+      Properties properties = OBPropertiesProvider.getInstance().getOpenbravoProperties();
+      String updateLocalPackages = properties.getProperty(BRANCH_LOCAL_PACKAGES_PROPERTY, "main");
+      String dataSetFileUrl = DATASET_FILE_URL.replace("<branch>", updateLocalPackages);
+      File dataSetFile = downloadFile(dataSetFileUrl);
+      try (FileInputStream fileInputStream = new FileInputStream(dataSetFile)) {
+        var xmlRootElement = XMLUtil.getInstance().getRootElement(fileInputStream);
+        processPackages(xmlRootElement);
+        processPackageVersions(xmlRootElement);
+        processPackageDependencies(xmlRootElement);
+      } catch (Exception e) {
+        throw new IOException("Error when updating packages", e);
+      }
     } finally {
       OBContext.restorePreviousMode();
     }
@@ -91,6 +100,8 @@ public class UpdateLocalPackagesUtil {
       pkg.setArtifact(packageElement.elementText(ARTIFACT));
       pkg.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
+      pkg.setBundle(
+          BooleanUtils.toBooleanObject(packageElement.elementText(ISBUNDLE)));
       OBDal.getInstance().save(pkg);
     }
     OBDal.getInstance().flush();
@@ -114,8 +125,6 @@ public class UpdateLocalPackagesUtil {
       packageVersion.setPackage(OBDal.getInstance()
           .get(Package.class, packageElement.element(ETDEP_PACKAGE_TAG).attributeValue(ID)));
       packageVersion.setVersion(packageElement.elementText(VERSION));
-      packageVersion.setAddDependency(
-          BooleanUtils.toBooleanObject(packageElement.elementText(INSTALL)));
       packageVersion.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
       OBDal.getInstance().save(packageVersion);
@@ -141,11 +150,18 @@ public class UpdateLocalPackagesUtil {
       pkgDep.setPackageVersion(OBDal.getInstance()
           .get(PackageVersion.class,
               packageElement.element(ETDEP_PACKAGE_VERSION_TAG).attributeValue(ID)));
-      pkgDep.setGroup(packageElement.elementText(DEPGROUP));
+      pkgDep.setGroup(packageElement.elementText(GROUP));
       pkgDep.setArtifact(packageElement.elementText(ARTIFACT));
       pkgDep.setVersion(packageElement.elementText(VERSION));
       pkgDep.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
+      pkgDep.setExternalDependency(
+          BooleanUtils.toBooleanObject(packageElement.elementText(EXTERNAL_DEPENDENCY)));
+      PackageVersion dependencyVersion = null;
+      if (packageElement.element(DEPENDENCY_VERSION).attributeCount() > 1) {
+        dependencyVersion = OBDal.getInstance().get(PackageVersion.class, packageElement.element(DEPENDENCY_VERSION).attributeValue(ID));
+      }
+      pkgDep.setDependencyVersion(dependencyVersion);
       OBDal.getInstance().save(pkgDep);
     }
     OBDal.getInstance().flush();
