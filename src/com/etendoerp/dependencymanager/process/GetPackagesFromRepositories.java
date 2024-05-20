@@ -361,8 +361,16 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
   private String buildPomUrl(String group, String artifact, String versionName) {
     String groupPath = group.replace(".", "/");
     String artifactPath = artifact.replace(".", "/");
-    String pomName = artifact + "-" + versionName + ".pom";
-    return GITHUB_POM_URL + groupPath + "/" + artifactPath + "/" + versionName + "/" + pomName;
+    String pomFileName = artifact + "-" + versionName + ".pom";
+    
+    StringBuilder urlBuilder = new StringBuilder();
+    urlBuilder.append(GITHUB_POM_URL)
+              .append(groupPath).append("/")
+              .append(artifactPath).append("/")
+              .append(versionName).append("/")
+              .append(pomFileName);
+
+    return urlBuilder.toString();
   }
 
   /**

@@ -23,7 +23,6 @@ import java.util.Properties;
 
 public class UpdateLocalPackagesUtil {
 
-  private static final Logger log = LogManager.getLogger();
   public static final String ETDEP_PACKAGE = "ETDEP_Package";
   public static final String ETDEP_PACKAGE_VERSION = "ETDEP_Package_Version";
   public static final String ETDEP_PACKAGE_DEPENDENCY = "ETDEP_Package_Dependency";
