@@ -1,6 +1,14 @@
 OB.ETDEP = OB.ETDEP || {};
 OB.ETDEP.ChangeVersion = {};
 
+OB.ETDEP.ChangeVersion.onLoad = function (view) {
+    var selectedRecord = view.parentWindow.view.viewGrid.getSelectedRecord();
+    if (selectedRecord.externalDependency) {
+        messageType = 'warning';
+        view.messageBar.setMessage(messageType, messageType === 'warning' ? 'Warning' : 'Information', OB.I18N.getLabel("ETDEP_External_Version_Warning"));
+    }
+}
+
 // Function to handle version changes for dependencies
 OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
     var selectedVersion = item.form.getValues().version$version;

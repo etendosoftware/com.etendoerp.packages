@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,10 +23,12 @@ import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyUtil;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 
 public class ChangeVersion extends BaseProcessActionHandler {
   private static final Logger log = LogManager.getLogger();
+  private static final String PENDING = "PENDING";
   SelectorChangeVersion selector = new SelectorChangeVersion();
 
   @Override
@@ -34,39 +37,57 @@ public class ChangeVersion extends BaseProcessActionHandler {
     try {
       jsonContent = new JSONObject(content);
       JSONObject params = jsonContent.getJSONObject("_params");
-      String dependencyId = jsonContent.getString("inpetdepDependencyId");
       String newVersionId = params.getString("version");
+      String isExternalDependency = jsonContent.optString("inpisexternaldependency", "N");
+
+      String dependencyId = jsonContent.getString("inpetdepDependencyId");
       OBContext.setAdminMode(true);
 
       Dependency dependency = OBDal.getInstance().get(Dependency.class, dependencyId);
       if (dependency == null) {
-        throw new JSONException(OBMessageUtils.messageBD("ETDEP_Package_Version_Not_Found_ID") + dependencyId);
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Package_Version_Not_Found_ID") + dependencyId);
       }
 
-      PackageVersion newVersion = OBDal.getInstance().get(PackageVersion.class, newVersionId);
-      if (newVersion == null) {
-        throw new JSONException(OBMessageUtils.messageBD("ETDEP_Dependency_Not_Found_ID") + newVersionId);
+      if (!StringUtils.isEmpty(newVersionId) && !StringUtils.equals(newVersionId, "null")) {
+        PackageVersion newVersion = OBDal.getInstance().get(PackageVersion.class, newVersionId);
+        if (newVersion == null) {
+          throw new OBException(OBMessageUtils.messageBD("ETDEP_Dependency_Not_Found_ID") + newVersionId);
+        }
+        log.debug("Changing version of dependency: {} to version ID: {}", dependency.getEntityName(), newVersionId);
+        String currentVersion = dependency.getVersion();
+        String updateToVersion = newVersion.getVersion();
+        String latestVersion = InstallDependency.fetchLatestVersion(dependency.getGroup(), dependency.getArtifact());
+
+        dependency.setVersion(updateToVersion);
+        dependency.setInstallationStatus(PENDING);
+        dependency.setVersionStatus(InstallDependency.determineVersionStatus(updateToVersion, latestVersion));
+
+        JSONArray dependenciesComparisonResults = compareDependenciesForChange(dependency.getGroup(),
+            dependency.getArtifact(), currentVersion, updateToVersion);
+
+        processDependencyChanges(dependenciesComparisonResults);
+      } else if (BooleanUtils.toBoolean(isExternalDependency)) {
+        String externalVersion = params.getString("externalVersion");
+        if (!StringUtils.isEmpty(externalVersion) && !StringUtils.equals(externalVersion, "null")) {
+          dependency.setFormat(DependencyUtil.FORMAT_JAR);
+          dependency.setInstallationStatus(PENDING);
+          dependency.setVersion(externalVersion);
+        } else {
+          throw new OBException(OBMessageUtils.messageBD("ETDEP_External_Version_Empty"));
+        }
       }
-
-      log.debug("Changing version of dependency: {} to version ID: {}", dependency.getEntityName(), newVersionId);
-      String currentVersion = dependency.getVersion();
-      String updateToVersion = newVersion.getVersion();
-      String latestVersion = InstallDependency.fetchLatestVersion(dependency.getGroup(), dependency.getArtifact());
-
-      dependency.setVersion(updateToVersion);
-      dependency.setInstallationStatus("PENDING");
-      dependency.setVersionStatus(InstallDependency.determineVersionStatus(updateToVersion, latestVersion));
-
-      JSONArray dependenciesComparisonResults = compareDependenciesForChange(dependency.getGroup(),
-          dependency.getArtifact(), currentVersion, updateToVersion);
-
-      processDependencyChanges(dependenciesComparisonResults);
 
       OBDal.getInstance().save(dependency);
       OBDal.getInstance().flush();
       
       return getResponseBuilder()
           .refreshGrid()
+          .build();
+    } catch (OBException e) {
+      log.error("Error processing or updating dependency version", e);
+      return getResponseBuilder()
+          .showMsgInView(ResponseActionsBuilder.MessageType.ERROR, "Error",
+              e.getMessage())
           .build();
     } catch (JSONException e) {
       log.error("Error processing JSON or updating dependency version", e);
