@@ -10,10 +10,13 @@ import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.exception.OBException;
 import org.openbravo.client.application.process.BaseProcessActionHandler;
 import org.openbravo.client.application.process.ResponseActionsBuilder;
 import org.openbravo.dal.core.OBContext;
+import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
 
@@ -53,6 +56,17 @@ public class ChangeVersion extends BaseProcessActionHandler {
       String updateToVersion = newVersion.getVersion();
       String latestVersion = InstallDependency.fetchLatestVersion(dependency.getGroup(), dependency.getArtifact());
 
+      String fromCore = newVersion.getFromCore();
+      String latestCore = newVersion.getLatestCore();
+
+      if (fromCore == null || latestCore == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Invalid_Core_Versions") + newVersionId);
+      }
+
+      if (!isCoreVersionCompatible(fromCore, latestCore)) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Core_Versions_Incompatible") + newVersionId);
+      }
+
       dependency.setVersion(updateToVersion);
       dependency.setInstallationStatus("PENDING");
       dependency.setVersionStatus(InstallDependency.determineVersionStatus(updateToVersion, latestVersion));
@@ -64,7 +78,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
 
       OBDal.getInstance().save(dependency);
       OBDal.getInstance().flush();
-      
+
       return getResponseBuilder()
           .refreshGrid()
           .build();
@@ -77,6 +91,38 @@ public class ChangeVersion extends BaseProcessActionHandler {
     } finally {
       OBContext.restorePreviousMode();
     }
+  }
+
+  private boolean isCoreVersionCompatible(String fromCore, String latestCore) {
+    PackageVersion currentCoreVersion = getCurrentCoreVersion();
+    if (currentCoreVersion == null) {
+      return false;
+    }
+
+    String currentVersion = currentCoreVersion.getVersion();
+    return compareVersions(currentVersion, fromCore) >= 0 && compareVersions(currentVersion, latestCore) <= 0;
+  }
+
+  private PackageVersion getCurrentCoreVersion() {
+    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, PackageUtil.ETENDO_CORE));
+    criteria.addOrder(Order.desc(PackageVersion.PROPERTY_VERSION));
+    criteria.setMaxResults(1);
+    return (PackageVersion) criteria.uniqueResult();
+  }
+
+  private int compareVersions(String version1, String version2) {
+    String[] v1 = version1.split("\\.");
+    String[] v2 = version2.split("\\.");
+
+    for (int i = 0; i < Math.max(v1.length, v2.length); i++) {
+      int num1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
+      int num2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
+      if (num1 != num2) {
+        return num1 - num2;
+      }
+    }
+    return 0;
   }
 
   private JSONArray compareDependenciesForChange(String depGroup, String artifact, String currentVersion, String updateToVersion) throws JSONException {

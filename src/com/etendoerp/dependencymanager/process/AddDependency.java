@@ -67,56 +67,67 @@ public class AddDependency extends BaseActionHandler {
       String successMessage = StringUtils.EMPTY;
       String successType = WARNING;
       if (packageVersion != null) {
-        successMessage = String.format(
-            OBMessageUtils.messageBD("ETDEP_Not_Dependencies"), packageVersion.getPackage().getIdentifier(),
-            packageVersion.getVersion());
-        log.debug("Adding dependencies for package %s in version %s", packageVersion.getPackage().getIdentifier(),
-            packageVersion.getIdentifier());
-        OBCriteria<PackageDependency> packageDependencyCriteria = OBDal.getInstance().createCriteria(
-            PackageDependency.class);
-        packageDependencyCriteria.add(Restrictions.eq(PackageDependency.PROPERTY_PACKAGEVERSION, packageVersion));
-        packageDependencyCriteria.add(Restrictions.ne(PackageDependency.PROPERTY_ARTIFACT, PackageUtil.ETENDO_CORE));
-        List<PackageDependency> dependencyList = packageDependencyCriteria.list();
+        String fromCore = packageVersion.getFromCore();
+        String latestCore = packageVersion.getLatestCore();
 
-        boolean needFlush = false;
-        for (PackageDependency packageDependency : dependencyList) {
-          boolean isExternalDependency = packageDependency.isExternalDependency().booleanValue();
-          if (DependencyUtil.existsDependency(packageDependency.getGroup(), packageDependency.getArtifact(),
-              packageDependency.getVersion(),
-              isExternalDependency)) {
-            log.debug("Dependency already exists: %s:%s:%s", packageDependency.getGroup(),
-                packageDependency.getArtifact(), packageDependency.getVersion());
-            continue;
-          }
-          Dependency dependency = new Dependency();
-          dependency.setVersion(packageDependency.getVersion());
-          dependency.setGroup(packageDependency.getGroup());
-          dependency.setArtifact(packageDependency.getArtifact());
-          dependency.setInstallationStatus(DependencyUtil.STATUS_PENDING);
-          String versionStatus;
-          if (isExternalDependency) {
-            dependency.setFormat(DependencyUtil.FORMAT_JAR);
-            dependency.setExternalDependency(true);
-            versionStatus = DependencyUtil.UNTRACKED_STATUS;
-          } else {
-            dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
-            PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
-            versionStatus = InstallDependency.determineVersionStatus(packageDependency.getVersion(),
-                latestPackageVersion.getVersion());
-          }
-          dependency.setVersionStatus(versionStatus);
-          needFlush = true;
-          OBDal.getInstance().save(dependency);
-          log.debug("New dependency added: %s", dependency.getIdentifier());
-        }
-
-        needFlush |= addVersionToInstall(packageVersion, dependencyList);
-        if (needFlush) {
-          OBDal.getInstance().flush();
+        if (fromCore == null || latestCore == null) {
           successMessage = String.format(
-              OBMessageUtils.messageBD("ETDEP_Added_Dependencies"), packageVersion.getPackage().getIdentifier(),
+              OBMessageUtils.messageBD("ETDEP_Invalid_Core_Versions"), packageVersion.getPackage().getIdentifier(),
               packageVersion.getVersion());
-          successType = SUCCESS;
+          log.warn("Invalid core versions for package %s in version %s", packageVersion.getPackage().getIdentifier(),
+              packageVersion.getIdentifier());
+        } else {
+          successMessage = String.format(
+              OBMessageUtils.messageBD("ETDEP_Not_Dependencies"), packageVersion.getPackage().getIdentifier(),
+              packageVersion.getVersion());
+          log.debug("Adding dependencies for package %s in version %s", packageVersion.getPackage().getIdentifier(),
+              packageVersion.getIdentifier());
+          OBCriteria<PackageDependency> packageDependencyCriteria = OBDal.getInstance().createCriteria(
+              PackageDependency.class);
+          packageDependencyCriteria.add(Restrictions.eq(PackageDependency.PROPERTY_PACKAGEVERSION, packageVersion));
+          packageDependencyCriteria.add(Restrictions.ne(PackageDependency.PROPERTY_ARTIFACT, PackageUtil.ETENDO_CORE));
+          List<PackageDependency> dependencyList = packageDependencyCriteria.list();
+
+          boolean needFlush = false;
+          for (PackageDependency packageDependency : dependencyList) {
+            boolean isExternalDependency = packageDependency.isExternalDependency().booleanValue();
+            if (DependencyUtil.existsDependency(packageDependency.getGroup(), packageDependency.getArtifact(),
+                packageDependency.getVersion(),
+                isExternalDependency)) {
+              log.debug("Dependency already exists: %s:%s:%s", packageDependency.getGroup(),
+                  packageDependency.getArtifact(), packageDependency.getVersion());
+              continue;
+            }
+            Dependency dependency = new Dependency();
+            dependency.setVersion(packageDependency.getVersion());
+            dependency.setGroup(packageDependency.getGroup());
+            dependency.setArtifact(packageDependency.getArtifact());
+            dependency.setInstallationStatus(DependencyUtil.STATUS_PENDING);
+            String versionStatus;
+            if (isExternalDependency) {
+              dependency.setFormat(DependencyUtil.FORMAT_JAR);
+              dependency.setExternalDependency(true);
+              versionStatus = DependencyUtil.UNTRACKED_STATUS;
+            } else {
+              dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
+              PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+              versionStatus = InstallDependency.determineVersionStatus(packageDependency.getVersion(),
+                  latestPackageVersion.getVersion());
+            }
+            dependency.setVersionStatus(versionStatus);
+            needFlush = true;
+            OBDal.getInstance().save(dependency);
+            log.debug("New dependency added: %s", dependency.getIdentifier());
+          }
+
+          needFlush |= addVersionToInstall(packageVersion, dependencyList);
+          if (needFlush) {
+            OBDal.getInstance().flush();
+            successMessage = String.format(
+                OBMessageUtils.messageBD("ETDEP_Added_Dependencies"), packageVersion.getPackage().getIdentifier(),
+                packageVersion.getVersion());
+            successType = SUCCESS;
+          }
         }
       }
       log.debug("Dependencies added successful");

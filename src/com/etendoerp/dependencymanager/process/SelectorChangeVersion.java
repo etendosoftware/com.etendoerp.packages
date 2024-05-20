@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.client.kernel.BaseActionHandler;
 import org.openbravo.dal.core.OBContext;
@@ -57,15 +58,20 @@ public class SelectorChangeVersion extends BaseActionHandler {
       // Fetch the package based on group and artifact identifiers
       Package depPackage = fetchPackageByGroupAndArtifact(depGroup, artifact);
 
-      // Check if the selected version is not compatible with the current core version
-      JSONObject compatibilityResult = PackageUtil.checkCoreCompatibility(depPackage, updateToVersion);
+      // Get the current Core version from the database
+      PackageVersion currentCoreVersion = getCurrentCoreVersion();
+      if (currentCoreVersion == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Core_Version_Not_Found"));
+      }
 
-      // Use the compatibility result
-      boolean isCompatible = compatibilityResult.getBoolean("isCompatible");
+      // Check if the selected version is not compatible with the current core version
+      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion.getVersion(), updateToVersion);
+
       jsonResponse.put("warning", !isCompatible); // Use warning to indicate compatibility issues
 
       // Optionally include additional compatibility details in the response
-      jsonResponse.put("compatibilityDetails", compatibilityResult);
+      jsonResponse.put("currentCoreVersion", currentCoreVersion.getVersion());
+      jsonResponse.put("updateToVersion", updateToVersion);
 
       // Compare the package versions and construct the comparison results
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
@@ -123,6 +129,13 @@ public class SelectorChangeVersion extends BaseActionHandler {
     PackageVersion packageVersion = (PackageVersion) packageVersionCriteria.uniqueResult();
 
     if (packageVersion != null) {
+      String fromCore = packageVersion.getFromCore();
+      String latestCore = packageVersion.getLatestCore();
+
+      if (fromCore == null || latestCore == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Invalid_Core_Versions") + version);
+      }
+
       List<PackageDependency> dependencies = packageVersion.getETDEPPackageDependencyList();
       for (PackageDependency dep : dependencies) {
         String key = dep.getGroup() + ":" + dep.getArtifact();
@@ -178,5 +191,47 @@ public class SelectorChangeVersion extends BaseActionHandler {
     }
 
     return dependencyInfo;
+  }
+
+  private boolean isCoreVersionCompatible(String currentCoreVersion, String updateToVersion) {
+    PackageVersion updateToCoreVersion = getCoreVersion(updateToVersion);
+    if (updateToCoreVersion == null) {
+      return false;
+    }
+
+    String fromCore = updateToCoreVersion.getFromCore();
+    String latestCore = updateToCoreVersion.getLatestCore();
+
+    return compareVersions(currentCoreVersion, fromCore) >= 0 && compareVersions(currentCoreVersion, latestCore) <= 0;
+  }
+
+  private PackageVersion getCoreVersion(String version) {
+    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, PackageUtil.ETENDO_CORE));
+    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_VERSION, version));
+    criteria.setMaxResults(1);
+    return (PackageVersion) criteria.uniqueResult();
+  }
+
+  private PackageVersion getCurrentCoreVersion() {
+    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, PackageUtil.ETENDO_CORE));
+    criteria.addOrder(Order.desc(PackageVersion.PROPERTY_VERSION));
+    criteria.setMaxResults(1);
+    return (PackageVersion) criteria.uniqueResult();
+  }
+
+  private int compareVersions(String version1, String version2) {
+    String[] v1 = version1.split("\\.");
+    String[] v2 = version2.split("\\.");
+
+    for (int i = 0; i < Math.max(v1.length, v2.length); i++) {
+      int num1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
+      int num2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
+      if (num1 != num2) {
+        return num1 - num2;
+      }
+    }
+    return 0;
   }
 }
