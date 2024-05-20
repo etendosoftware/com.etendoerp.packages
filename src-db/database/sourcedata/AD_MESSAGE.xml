@@ -354,7 +354,7 @@
 <!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <VALUE><![CDATA[ETDEP_External_Version_Warning]]></VALUE>
-<!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <MSGTEXT><![CDATA[When you use an external version you must ensure that the new version exists and you have access or you will have compilation error.]]></MSGTEXT>
+<!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <MSGTEXT><![CDATA[When using an external version, ensure that the new version exists and you have access to it, or you will encounter a compilation error.]]></MSGTEXT>
 <!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <MSGTYPE><![CDATA[W]]></MSGTYPE>
 <!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--BCFC9E5079AA4A9EABFAFFA1D72D23DE-->  <ISINCLUDEINI18N><![CDATA[N]]></ISINCLUDEINI18N>

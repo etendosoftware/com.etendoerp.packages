@@ -3,6 +3,8 @@ package com.etendoerp.dependencymanager.filterexpression;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.openbravo.base.exception.OBException;
@@ -16,6 +18,7 @@ public class ChangeFormatDefaultValuesExpression implements FilterExpression {
   private static final String EXTERNAL_VERSION = "externalVersion";
   private static final String VERSION_DISPLAY_LOGIC = "version_display_logic";
 
+  private static final Logger log = LogManager.getLogger();
   @Override
   public String getExpression(Map<String, String> requestMap) {
     String currentParam = requestMap.get("currentParam");
@@ -41,6 +44,7 @@ public class ChangeFormatDefaultValuesExpression implements FilterExpression {
           return null;
       }
     } catch (JSONException e) {
+      log.error("Error parsing context JSON", e);
       throw new OBException(e);
     }
     return null;

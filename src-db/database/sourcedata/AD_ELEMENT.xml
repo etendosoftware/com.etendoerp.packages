@@ -298,7 +298,7 @@ This process only deletes the selected module, not its dependencies.]]></PO_HELP
 <!--D56F9EF234354E91BC7A01400AD19D33-->  <COLUMNNAME><![CDATA[version_display_logic]]></COLUMNNAME>
 <!--D56F9EF234354E91BC7A01400AD19D33-->  <NAME><![CDATA[Version Display Logic]]></NAME>
 <!--D56F9EF234354E91BC7A01400AD19D33-->  <PRINTNAME><![CDATA[Version Display Logic]]></PRINTNAME>
-<!--D56F9EF234354E91BC7A01400AD19D33-->  <DESCRIPTION><![CDATA[Version Display Logic]]></DESCRIPTION>
+<!--D56F9EF234354E91BC7A01400AD19D33-->  <DESCRIPTION><![CDATA[Logic to determine how the version of a package is displayed, including checks for stored versions or custom external versions.]]></DESCRIPTION>
 <!--D56F9EF234354E91BC7A01400AD19D33-->  <HELP><![CDATA[Version Display Logic to check if a package has versions stored or is external and has custom versions.]]></HELP>
 <!--D56F9EF234354E91BC7A01400AD19D33-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--D56F9EF234354E91BC7A01400AD19D33-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
