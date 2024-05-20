@@ -237,7 +237,7 @@ public class PackageUtil {
     criteria.add(Restrictions.eq("pkg.artifact", artifact));
     criteria.add(Restrictions.eq("pkg.group", group));
     criteria.addOrder(Order.desc(VERSION));
-    criteria.setMaxResults(1);
+    criteria.setMaxResults(1).uniqueResult();
 
     List<PackageVersion> packageVersions = criteria.list();
     if (!packageVersions.isEmpty()) {
@@ -255,7 +255,13 @@ public class PackageUtil {
   public static String[] splitCoreVersionRange(String versionRange) {
     String cleanedRange = versionRange.replaceAll("[\\[\\]()]", "");
     String[] versionSplit = cleanedRange.split(",");
-    if (versionSplit.length != 2) throw new IllegalArgumentException(OBMessageUtils.messageBD("ETDEP_Invalid_Version_Range_Format") + versionRange);
+    if (versionSplit.length != 2) {
+      String errorMessage = String.format(
+          OBMessageUtils.messageBD("ETDEP_Invalid_Version_Range_Format"),
+          versionRange
+      );
+      throw new IllegalArgumentException(errorMessage);
+    }
     return versionSplit;
   }
 
