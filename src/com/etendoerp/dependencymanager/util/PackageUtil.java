@@ -237,11 +237,11 @@ public class PackageUtil {
     criteria.add(Restrictions.eq("pkg.artifact", artifact));
     criteria.add(Restrictions.eq("pkg.group", group));
     criteria.addOrder(Order.desc(VERSION));
-    criteria.setMaxResults(1).uniqueResult();
+    criteria.setMaxResults(1);
 
-    List<PackageVersion> packageVersions = criteria.list();
-    if (!packageVersions.isEmpty()) {
-      return packageVersions.get(0).getVersion();
+    PackageVersion packageVersion = (PackageVersion) criteria.uniqueResult();
+    if (packageVersion != null) {
+        return packageVersion.getVersion();
     }
     return null;
   }
