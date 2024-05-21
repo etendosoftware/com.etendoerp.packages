@@ -29,6 +29,7 @@ import com.etendoerp.dependencymanager.util.PackageUtil;
 public class ChangeVersion extends BaseProcessActionHandler {
   private static final Logger log = LogManager.getLogger();
   private static final String PENDING = "PENDING";
+  private static final String NULL_STRING = "null";
   SelectorChangeVersion selector = new SelectorChangeVersion();
 
   @Override
@@ -38,7 +39,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
       jsonContent = new JSONObject(content);
       JSONObject params = jsonContent.getJSONObject("_params");
       String newVersionId = params.getString("version");
-      String isExternalDependency = jsonContent.optString("inpisexternaldependency", "N");
+      String isExternalDependency = jsonContent.getString("inpisexternaldependency");
 
       String dependencyId = jsonContent.getString("inpetdepDependencyId");
       OBContext.setAdminMode(true);
@@ -48,7 +49,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
         throw new OBException(OBMessageUtils.messageBD("ETDEP_Package_Version_Not_Found_ID") + dependencyId);
       }
 
-      if (!StringUtils.isEmpty(newVersionId) && !StringUtils.equals(newVersionId, "null")) {
+      if (!StringUtils.isEmpty(newVersionId) && !StringUtils.equals(newVersionId, NULL_STRING)) {
         PackageVersion newVersion = OBDal.getInstance().get(PackageVersion.class, newVersionId);
         if (newVersion == null) {
           throw new OBException(OBMessageUtils.messageBD("ETDEP_Dependency_Not_Found_ID") + newVersionId);
@@ -68,7 +69,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
         processDependencyChanges(dependenciesComparisonResults);
       } else if (BooleanUtils.toBoolean(isExternalDependency)) {
         String externalVersion = params.getString("externalVersion");
-        if (!StringUtils.isEmpty(externalVersion) && !StringUtils.equals(externalVersion, "null")) {
+        if (StringUtils.isNotEmpty(externalVersion) && !StringUtils.equals(externalVersion, NULL_STRING)) {
           dependency.setFormat(DependencyUtil.FORMAT_JAR);
           dependency.setInstallationStatus(PENDING);
           dependency.setVersion(externalVersion);

@@ -2,10 +2,9 @@ OB.ETDEP = OB.ETDEP || {};
 OB.ETDEP.ChangeVersion = {};
 
 OB.ETDEP.ChangeVersion.onLoad = function (view) {
-    let selectedRecord = view.parentWindow.view.viewGrid.getSelectedRecord();
-    if (selectedRecord.externalDependency) {
-        messageType = 'warning';
-        view.messageBar.setMessage(messageType, messageType === 'warning' ? 'Warning' : 'Information', OB.I18N.getLabel("ETDEP_External_Version_Warning"));
+    const selectedDependency = view.parentWindow.view.viewGrid.getSelectedRecord();
+    if (selectedDependency.externalDependency) {
+        view.messageBar.setMessage('warning', 'Warning', OB.I18N.getLabel("ETDEP_External_Version_Warning"));
     }
 }
 

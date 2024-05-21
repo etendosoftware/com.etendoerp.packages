@@ -37,7 +37,7 @@ public class ChangeFormatDefaultValuesExpression implements FilterExpression {
             }
             break;
         case EXTERNAL_VERSION:
-          return !StringUtils.isEmpty(context.getString("inpversion")) ? context.getString("inpversion") : null;
+          return StringUtils.isNotEmpty(context.getString("inpversion")) ? context.getString("inpversion") : null;
         case VERSION_DISPLAY_LOGIC:
           return StringUtils.equals(context.getString("inpisexternaldependency"), "N") ? "Y" : "N";
         default:
