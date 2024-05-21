@@ -12,7 +12,7 @@ import org.openbravo.client.application.FilterExpression;
 
 import com.etendoerp.dependencymanager.util.DependencyUtil;
 
-public class ChangeFormatDefaultValuesExpression implements FilterExpression {
+public class DependencyManagerDefaultValuesExpression implements FilterExpression {
 
   private static final String NEW_FORMAT = "newFormat";
   private static final String EXTERNAL_VERSION = "externalVersion";
