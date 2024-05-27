@@ -104,11 +104,10 @@ public class ChangeVersion extends BaseProcessActionHandler {
   }
 
   private PackageVersion getCurrentCoreVersion() {
-    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
-    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, PackageUtil.ETENDO_CORE));
-    criteria.addOrder(Order.desc(PackageVersion.PROPERTY_VERSION));
-    criteria.setMaxResults(1);
-    return (PackageVersion) criteria.uniqueResult();
+      OBCriteria<PackageVersion> packageVersionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+      packageVersionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, Boolean.TRUE))
+                            .addOrder(Order.desc(PackageVersion.PROPERTY_CREATIONDATE));
+      return (PackageVersion) packageVersionCriteria.uniqueResult();
   }
 
   private int compareVersions(String version1, String version2) {
