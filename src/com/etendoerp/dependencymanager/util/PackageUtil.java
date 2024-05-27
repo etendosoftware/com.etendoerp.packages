@@ -198,15 +198,24 @@ public class PackageUtil {
    * @return The updated or created Dependency object.
    */
   public static synchronized void updateOrCreateDependency(String group, String artifact, String version) {
-    Dependency existingDependency = OBDal.getInstance()
-        .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
+    Package existingPakage = OBDal.getInstance()
+        .createQuery(Package.class, "as pv where pv.group = :group and pv.artifact = :artifact")
         .setNamedParameter(GROUP, group)
         .setNamedParameter(ARTIFACT, artifact)
+        .setMaxResult(1)
         .uniqueResult();
+    PackageVersion lastVersion = null;
+    if (existingPakage != null) {
+      lastVersion = getLastPackageVersion(existingPakage);
+    }
+    String versionStatus = InstallDependency.determineVersionStatus(version, lastVersion != null ? lastVersion.getVersion() : null);
 
-    String latestVersion = InstallDependency.fetchLatestVersion(group, artifact);
-    String versionStatus = InstallDependency.determineVersionStatus(version, latestVersion);
-
+    Dependency existingDependency = OBDal.getInstance()
+        .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
+        .setNamedParameter(PackageUtil.GROUP, group)
+        .setNamedParameter(PackageUtil.ARTIFACT, artifact)
+        .setMaxResult(1)
+        .uniqueResult();
     if (existingDependency != null) {
       existingDependency.setVersion(version);
       existingDependency.setVersionStatus(versionStatus);
@@ -217,6 +226,13 @@ public class PackageUtil {
       newDependency.setVersion(version);
       newDependency.setVersionStatus(versionStatus);
       existingDependency = newDependency;
+    }
+    if (existingPakage == null) {
+      existingDependency.setFormat(DependencyUtil.FORMAT_JAR);
+      existingDependency.setExternalDependency(true);
+      existingDependency.setVersionStatus(DependencyUtil.UNTRACKED_STATUS);
+    } else {
+      existingDependency.setExternalDependency(false);
     }
     OBDal.getInstance().save(existingDependency);
   }
