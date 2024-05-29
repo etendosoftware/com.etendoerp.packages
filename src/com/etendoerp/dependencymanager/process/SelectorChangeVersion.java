@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.client.kernel.BaseActionHandler;
 import org.openbravo.dal.core.OBContext;
@@ -58,20 +57,31 @@ public class SelectorChangeVersion extends BaseActionHandler {
       // Fetch the package based on group and artifact identifiers
       Package depPackage = fetchPackageByGroupAndArtifact(depGroup, artifact);
 
-      // Get the current Core version from the database
-      PackageVersion currentCoreVersion = getCurrentCoreVersion();
-      if (currentCoreVersion == null) {
+      // Fetch the package versions for the current and updated versions
+      PackageVersion currentPackageVersion = getPackageVersion(depPackage, currentVersion);
+      PackageVersion updateToPackageVersion = getPackageVersion(depPackage, updateToVersion);
+
+      if (currentPackageVersion == null || updateToPackageVersion == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Version_Not_Found"));
+      }
+
+      PackageDependency currentEtendoCoreDependency = getEtendoCoreDependency(currentPackageVersion);
+      PackageDependency updateToEtendoCoreDependency = getEtendoCoreDependency(updateToPackageVersion);
+
+      if (currentEtendoCoreDependency == null || updateToEtendoCoreDependency == null) {
         throw new OBException(OBMessageUtils.messageBD("ETDEP_Core_Version_Not_Found"));
       }
 
+      String currentCoreVersion = currentEtendoCoreDependency.getVersion();
+      String updateToCoreVersion = updateToEtendoCoreDependency.getVersion();
+
       // Check if the selected version is not compatible with the current core version
-      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion.getVersion(), updateToVersion);
+      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, updateToCoreVersion);
+      jsonResponse.put("warning", !isCompatible);
 
-      jsonResponse.put("warning", !isCompatible); // Use warning to indicate compatibility issues
-
-      // Optionally include additional compatibility details in the response
-      jsonResponse.put("currentCoreVersion", currentCoreVersion.getVersion());
-      jsonResponse.put("updateToVersion", updateToVersion);
+      // Include additional compatibility details in the response
+      jsonResponse.put("currentCoreVersion", currentCoreVersion);
+      jsonResponse.put("updateToCoreVersion", updateToCoreVersion);
 
       // Compare the package versions and construct the comparison results
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
@@ -93,8 +103,8 @@ public class SelectorChangeVersion extends BaseActionHandler {
   public Package fetchPackageByGroupAndArtifact(String depGroup, String artifact) {
     OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
     packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, depGroup))
-                   .add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact))
-                   .setMaxResults(1);
+        .add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact))
+        .setMaxResults(1);
     return (Package) packageCriteria.uniqueResult();
   }
 
@@ -193,31 +203,42 @@ public class SelectorChangeVersion extends BaseActionHandler {
     return dependencyInfo;
   }
 
-  private boolean isCoreVersionCompatible(String currentCoreVersion, String updateToVersion) {
-    PackageVersion updateToCoreVersion = getCoreVersion(updateToVersion);
-    if (updateToCoreVersion == null) {
+  private PackageVersion getPackageVersion(Package depPackage, String version) {
+    OBCriteria<PackageVersion> versionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    versionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, depPackage));
+    versionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_VERSION, version));
+    versionCriteria.setMaxResults(1);
+    return (PackageVersion) versionCriteria.uniqueResult();
+  }
+
+  private PackageDependency getEtendoCoreDependency(PackageVersion packageVersion) {
+    for (PackageDependency dep : packageVersion.getETDEPPackageDependencyList()) {
+      if (PackageUtil.ETENDO_CORE.equals(dep.getArtifact())) {
+        return dep;
+      }
+    }
+    return null;
+  }
+
+  public boolean isCoreVersionCompatible(String currentCoreVersionRange, String requiredCoreVersionRange) {
+    try {
+      String[] currentRange = currentCoreVersionRange.split(",");
+      String[] requiredRange = requiredCoreVersionRange.split(",");
+
+      String currentStart = currentRange[0].substring(1).trim();
+      String currentEnd = currentRange[1].substring(0, currentRange[1].length() - 1).trim();
+
+      String requiredStart = requiredRange[0].substring(1).trim();
+      String requiredEnd = requiredRange[1].substring(0, requiredRange[1].length() - 1).trim();
+
+      boolean startIncluded = requiredRange[0].startsWith("[");
+      boolean endIncluded = requiredRange[1].endsWith("]");
+
+      return (compareVersions(currentStart, requiredStart) <= 0 || (startIncluded && compareVersions(currentStart, requiredStart) == 0)) &&
+          (compareVersions(currentEnd, requiredEnd) >= 0 || (endIncluded && compareVersions(currentEnd, requiredEnd) == 0));
+    } catch (NumberFormatException e) {
       return false;
     }
-
-    String fromCore = updateToCoreVersion.getFromCore();
-    String latestCore = updateToCoreVersion.getLatestCore();
-
-    return compareVersions(currentCoreVersion, fromCore) >= 0 && compareVersions(currentCoreVersion, latestCore) <= 0;
-  }
-
-  private PackageVersion getCoreVersion(String version) {
-    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
-    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, PackageUtil.ETENDO_CORE));
-    criteria.add(Restrictions.eq(PackageVersion.PROPERTY_VERSION, version));
-    criteria.setMaxResults(1);
-    return (PackageVersion) criteria.uniqueResult();
-  }
-
-  private PackageVersion getCurrentCoreVersion() {
-      OBCriteria<PackageVersion> packageVersionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);
-      packageVersionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, Boolean.TRUE))
-                            .addOrder(Order.desc(PackageVersion.PROPERTY_CREATIONDATE));
-      return (PackageVersion) packageVersionCriteria.uniqueResult();
   }
 
   private int compareVersions(String version1, String version2) {
@@ -228,9 +249,40 @@ public class SelectorChangeVersion extends BaseActionHandler {
       int num1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
       int num2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
       if (num1 != num2) {
-        return num1 - num2;
+        return Integer.compare(num1, num2);
       }
     }
     return 0;
+  }
+
+  private String[] extractVersionAndBoundary(String version) {
+    String boundary = version.substring(0, 1) + version.substring(version.length() - 1);
+    String versionNumber = version.substring(1, version.length() - 1);
+    return new String[]{boundary, versionNumber};
+  }
+
+  private boolean handleEqualVersions(String currentBoundary, String updateBoundary) {
+    if (currentBoundary.equals("[]") || updateBoundary.equals("[]")) {
+      return true;
+    } else if (currentBoundary.equals("[)") && updateBoundary.equals("[)")) {
+      return true;
+    } else if (currentBoundary.equals("(]") && updateBoundary.equals("(]")) {
+      return true;
+    } else if (currentBoundary.equals("()") && updateBoundary.equals("()")) {
+      return false;
+    }
+    return false;
+  }
+
+  private boolean isVersionIncluded(String currentVersion, String updateVersion) {
+    String[] currentRange = currentVersion.split(",");
+    String[] updateRange = updateVersion.split(",");
+
+    String currentStart = currentRange[0].replaceAll("[\\[\\(]", "").trim();
+    String currentEnd = currentRange[1].replaceAll("[\\]\\)]", "").trim();
+    String updateStart = updateRange[0].replaceAll("[\\[\\(]", "").trim();
+    String updateEnd = updateRange[1].replaceAll("[\\]\\)]", "").trim();
+
+    return compareVersions(currentStart, updateStart) <= 0 && compareVersions(currentEnd, updateEnd) >= 0;
   }
 }

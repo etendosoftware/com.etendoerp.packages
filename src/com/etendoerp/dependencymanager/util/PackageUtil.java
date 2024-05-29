@@ -135,7 +135,7 @@ public class PackageUtil {
    *     The version to check compatibility for.
    * @return true if the version falls within the range, false otherwise.
    */
-  private static boolean isCompatible(String versionRange, String versionToCheck) {
+  public static boolean isCompatible(String versionRange, String versionToCheck) {
     if (StringUtils.isEmpty(versionRange) || StringUtils.isEmpty(versionToCheck)) {
       return false;
     }

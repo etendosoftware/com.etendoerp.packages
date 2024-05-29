@@ -23,11 +23,11 @@ OB.ETDEP.ChangeVersion.onChangeVersion = function(item, view, form, grid) {
             var messages = []; // Messages to display
             var messageType = 'info'; // Default message type
 
-            if (data.warning) {
+            if (data.warning && data.currentCoreVersion && data.updateToCoreVersion) {
                 var currentCoreVersion = data.currentCoreVersion;
-                var updateToVersion = data.updateToVersion;
+                var updateToVersion = data.updateToCoreVersion;
                 var message = OB.I18N.getLabel("ETDEP_Core_Incompatibility_Warning");
-                message = message.replace("%s1", updateToVersion).replace("%s2", currentCoreVersion);
+                message = message.replace("%s", updateToVersion).replace("%s", currentCoreVersion);
                 messageType = 'warning';
                 messages.push("<li>" + message + "</li>");
             }
