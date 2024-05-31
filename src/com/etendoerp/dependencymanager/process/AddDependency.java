@@ -100,7 +100,7 @@ public class AddDependency extends BaseActionHandler {
             versionStatus = DependencyUtil.UNTRACKED_STATUS;
           } else {
             dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
-            PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+            PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageDependency.getDependencyVersion().getPackage());
             versionStatus = InstallDependency.determineVersionStatus(packageDependency.getVersion(),
                 latestPackageVersion.getVersion());
           }
