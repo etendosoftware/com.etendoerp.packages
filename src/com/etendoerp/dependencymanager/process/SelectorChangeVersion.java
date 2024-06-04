@@ -225,14 +225,14 @@ public class SelectorChangeVersion extends BaseActionHandler {
       String[] currentRange = currentCoreVersionRange.split(",");
       String[] requiredRange = requiredCoreVersionRange.split(",");
 
-      String currentStart = StringUtils.isNotBlank(currentRange[0]) ? currentRange[0].substring(1).trim() : "";
-      String currentEnd = StringUtils.isNotBlank(currentRange[1]) ? currentRange[1].substring(0, currentRange[1].length() - 1).trim() : "";
+      String currentStart = currentRange.length > 0 && StringUtils.isNotBlank(currentRange[0]) ? StringUtils.trim(StringUtils.substring(currentRange[0], 1)) : "";
+      String currentEnd = currentRange.length > 1 && StringUtils.isNotBlank(currentRange[1]) ? StringUtils.trim(StringUtils.substring(currentRange[1], 0, currentRange[1].length() - 1)) : "";
 
       String requiredStart = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) ? requiredRange[0].substring(1).trim() : "";
       String requiredEnd = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) ? requiredRange[1].substring(0, requiredRange[1].length() - 1).trim() : "";
 
-      boolean startIncluded = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) && requiredRange[0].startsWith("[");
-      boolean endIncluded = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) && requiredRange[1].endsWith("]");
+      boolean startIncluded = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) && StringUtils.startsWith(requiredRange[0], "[");
+      boolean endIncluded = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) && StringUtils.endsWith(requiredRange[1], "]");
 
       return (compareVersions(currentStart, requiredStart) <= 0 || (startIncluded && compareVersions(currentStart, requiredStart) == 0)) &&
           (compareVersions(currentEnd, requiredEnd) >= 0 || (endIncluded && compareVersions(currentEnd, requiredEnd) == 0));
