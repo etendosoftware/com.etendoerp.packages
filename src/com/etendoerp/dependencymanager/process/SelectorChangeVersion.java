@@ -228,8 +228,8 @@ public class SelectorChangeVersion extends BaseActionHandler {
       String currentStart = currentRange.length > 0 && StringUtils.isNotBlank(currentRange[0]) ? StringUtils.trim(StringUtils.substring(currentRange[0], 1)) : "";
       String currentEnd = currentRange.length > 1 && StringUtils.isNotBlank(currentRange[1]) ? StringUtils.trim(StringUtils.substring(currentRange[1], 0, currentRange[1].length() - 1)) : "";
 
-      String requiredStart = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) ? requiredRange[0].substring(1).trim() : "";
-      String requiredEnd = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) ? requiredRange[1].substring(0, requiredRange[1].length() - 1).trim() : "";
+      String requiredStart = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) ? StringUtils.trim(StringUtils.substring(requiredRange[0], 1)) : "";
+      String requiredEnd = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) ? StringUtils.trim(StringUtils.substring(requiredRange[1], 0, requiredRange[1].length() - 1)) : "";
 
       boolean startIncluded = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) && StringUtils.startsWith(requiredRange[0], "[");
       boolean endIncluded = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) && StringUtils.endsWith(requiredRange[1], "]");
