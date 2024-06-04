@@ -241,28 +241,6 @@ public class PackageUtil {
   }
 
   /**
-   * Fetches the latest package version from the database using OBCriteria.
-   *
-   * @param group The group of the package.
-   * @param artifact The artifact of the package.
-   * @return The latest version string or null if no versions are found.
-   */
-  private static String getLastPackageVersionFromDB(String group, String artifact) {
-    OBCriteria<PackageVersion> criteria = OBDal.getInstance().createCriteria(PackageVersion.class);
-    criteria.createAlias("package", "pkg");
-    criteria.add(Restrictions.eq("pkg.artifact", artifact));
-    criteria.add(Restrictions.eq("pkg.group", group));
-    criteria.addOrder(Order.desc(VERSION));
-    criteria.setMaxResults(1);
-
-    PackageVersion packageVersion = (PackageVersion) criteria.uniqueResult();
-    if (packageVersion != null) {
-        return packageVersion.getVersion();
-    }
-    return null;
-  }
-
-  /**
    * Splits the provided version range string into a two-element array.
    *
    * @param versionRange The version range string to split.

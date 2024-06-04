@@ -213,26 +213,26 @@ public class SelectorChangeVersion extends BaseActionHandler {
 
   private PackageDependency getEtendoCoreDependency(PackageVersion packageVersion) {
     for (PackageDependency dep : packageVersion.getETDEPPackageDependencyList()) {
-      if (PackageUtil.ETENDO_CORE.equals(dep.getArtifact())) {
-        return dep;
-      }
+        if (StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
+            return dep;
+        }
     }
     return null;
   }
-
+  
   public boolean isCoreVersionCompatible(String currentCoreVersionRange, String requiredCoreVersionRange) {
     try {
       String[] currentRange = currentCoreVersionRange.split(",");
       String[] requiredRange = requiredCoreVersionRange.split(",");
 
-      String currentStart = currentRange[0].substring(1).trim();
-      String currentEnd = currentRange[1].substring(0, currentRange[1].length() - 1).trim();
+      String currentStart = StringUtils.isNotBlank(currentRange[0]) ? currentRange[0].substring(1).trim() : "";
+      String currentEnd = StringUtils.isNotBlank(currentRange[1]) ? currentRange[1].substring(0, currentRange[1].length() - 1).trim() : "";
 
-      String requiredStart = requiredRange[0].substring(1).trim();
-      String requiredEnd = requiredRange[1].substring(0, requiredRange[1].length() - 1).trim();
+      String requiredStart = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) ? requiredRange[0].substring(1).trim() : "";
+      String requiredEnd = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) ? requiredRange[1].substring(0, requiredRange[1].length() - 1).trim() : "";
 
-      boolean startIncluded = requiredRange[0].startsWith("[");
-      boolean endIncluded = requiredRange[1].endsWith("]");
+      boolean startIncluded = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) && requiredRange[0].startsWith("[");
+      boolean endIncluded = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) && requiredRange[1].endsWith("]");
 
       return (compareVersions(currentStart, requiredStart) <= 0 || (startIncluded && compareVersions(currentStart, requiredStart) == 0)) &&
           (compareVersions(currentEnd, requiredEnd) >= 0 || (endIncluded && compareVersions(currentEnd, requiredEnd) == 0));
@@ -253,36 +253,5 @@ public class SelectorChangeVersion extends BaseActionHandler {
       }
     }
     return 0;
-  }
-
-  private String[] extractVersionAndBoundary(String version) {
-    String boundary = version.substring(0, 1) + version.substring(version.length() - 1);
-    String versionNumber = version.substring(1, version.length() - 1);
-    return new String[]{boundary, versionNumber};
-  }
-
-  private boolean handleEqualVersions(String currentBoundary, String updateBoundary) {
-    if (currentBoundary.equals("[]") || updateBoundary.equals("[]")) {
-      return true;
-    } else if (currentBoundary.equals("[)") && updateBoundary.equals("[)")) {
-      return true;
-    } else if (currentBoundary.equals("(]") && updateBoundary.equals("(]")) {
-      return true;
-    } else if (currentBoundary.equals("()") && updateBoundary.equals("()")) {
-      return false;
-    }
-    return false;
-  }
-
-  private boolean isVersionIncluded(String currentVersion, String updateVersion) {
-    String[] currentRange = currentVersion.split(",");
-    String[] updateRange = updateVersion.split(",");
-
-    String currentStart = currentRange[0].replaceAll("[\\[\\(]", "").trim();
-    String currentEnd = currentRange[1].replaceAll("[\\]\\)]", "").trim();
-    String updateStart = updateRange[0].replaceAll("[\\[\\(]", "").trim();
-    String updateEnd = updateRange[1].replaceAll("[\\]\\)]", "").trim();
-
-    return compareVersions(currentStart, updateStart) <= 0 && compareVersions(currentEnd, updateEnd) >= 0;
   }
 }
