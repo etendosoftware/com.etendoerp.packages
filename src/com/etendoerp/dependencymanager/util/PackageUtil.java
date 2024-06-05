@@ -8,10 +8,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.base.exception.OBException;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
+import org.openbravo.erpCommon.utility.OBMessageUtils;
 import org.openbravo.model.ad.module.Module;
 
 import com.etendoerp.dependencymanager.actions.InstallDependency;
@@ -32,6 +34,7 @@ public class PackageUtil {
   public static final String UPDATED = "Updated";
   public static final String VERSION_V1 = "version_v1";
   public static final String VERSION_V2 = "version_v2";
+  public static final String PACKAGE_VERSION_ID = "packageVersion.id";
   public static final String IS_COMPATIBLE = "isCompatible";
   // Constants
   private static final Logger log = LogManager.getLogger();
@@ -132,7 +135,7 @@ public class PackageUtil {
    *     The version to check compatibility for.
    * @return true if the version falls within the range, false otherwise.
    */
-  private static boolean isCompatible(String versionRange, String versionToCheck) {
+  public static boolean isCompatible(String versionRange, String versionToCheck) {
     if (StringUtils.isEmpty(versionRange) || StringUtils.isEmpty(versionToCheck)) {
       return false;
     }
@@ -237,6 +240,40 @@ public class PackageUtil {
     OBDal.getInstance().save(existingDependency);
   }
 
+  /**
+   * Splits the provided version range string into a two-element array.
+   *
+   * @param versionRange The version range string to split.
+   * @return A two-element array with the start and end versions.
+   */
+  public static String[] splitCoreVersionRange(String versionRange) {
+    String cleanedRange = versionRange.replaceAll("[\\[\\]()]", "");
+    String[] versionSplit = cleanedRange.split(",");
+    if (versionSplit.length != 2) {
+      String errorMessage = String.format(
+          OBMessageUtils.messageBD("ETDEP_Invalid_Version_Range_Format"),
+          versionRange
+      );
+      throw new IllegalArgumentException(errorMessage);
+    }
+    return versionSplit;
+  }
+
+  /**
+   * Finds the core version for a specified package version ID.
+   *
+   * @param packageVersionId The package version ID to search for.
+   * @return The core version string or null if not found.
+   */
+  public static String findCoreVersions(String packageVersionId) {
+    OBCriteria<PackageDependency> criteria = OBDal.getInstance().createCriteria(PackageDependency.class);
+    criteria.add(Restrictions.eq(ARTIFACT, ETENDO_CORE));
+    criteria.add(Restrictions.eq(PACKAGE_VERSION_ID, packageVersionId));
+    PackageDependency dep = (PackageDependency) criteria.setMaxResults(1).uniqueResult();
+
+    return dep != null ? dep.getVersion() : null;
+  }
+  
   public static String getCoreCompatibleOrLatestVersion(Package pkg) {
     // Get Package Versions
     OBCriteria<PackageVersion> versionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);

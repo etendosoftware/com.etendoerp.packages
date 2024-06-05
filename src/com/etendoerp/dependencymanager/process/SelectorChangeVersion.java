@@ -57,15 +57,31 @@ public class SelectorChangeVersion extends BaseActionHandler {
       // Fetch the package based on group and artifact identifiers
       Package depPackage = fetchPackageByGroupAndArtifact(depGroup, artifact);
 
+      // Fetch the package versions for the current and updated versions
+      PackageVersion currentPackageVersion = getPackageVersion(depPackage, currentVersion);
+      PackageVersion updateToPackageVersion = getPackageVersion(depPackage, updateToVersion);
+
+      if (currentPackageVersion == null || updateToPackageVersion == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Version_Not_Found"));
+      }
+
+      PackageDependency currentEtendoCoreDependency = getEtendoCoreDependency(currentPackageVersion);
+      PackageDependency updateToEtendoCoreDependency = getEtendoCoreDependency(updateToPackageVersion);
+
+      if (currentEtendoCoreDependency == null || updateToEtendoCoreDependency == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Core_Version_Not_Found"));
+      }
+
+      String currentCoreVersion = currentEtendoCoreDependency.getVersion();
+      String updateToCoreVersion = updateToEtendoCoreDependency.getVersion();
+
       // Check if the selected version is not compatible with the current core version
-      JSONObject compatibilityResult = PackageUtil.checkCoreCompatibility(depPackage, updateToVersion);
+      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, updateToCoreVersion);
+      jsonResponse.put("warning", !isCompatible);
 
-      // Use the compatibility result
-      boolean isCompatible = compatibilityResult.getBoolean("isCompatible");
-      jsonResponse.put("warning", !isCompatible); // Use warning to indicate compatibility issues
-
-      // Optionally include additional compatibility details in the response
-      jsonResponse.put("compatibilityDetails", compatibilityResult);
+      // Include additional compatibility details in the response
+      jsonResponse.put("currentCoreVersion", currentCoreVersion);
+      jsonResponse.put("updateToCoreVersion", updateToCoreVersion);
 
       // Compare the package versions and construct the comparison results
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
@@ -123,6 +139,13 @@ public class SelectorChangeVersion extends BaseActionHandler {
     PackageVersion packageVersion = (PackageVersion) packageVersionCriteria.uniqueResult();
 
     if (packageVersion != null) {
+      String fromCore = packageVersion.getFromCore();
+      String latestCore = packageVersion.getLatestCore();
+
+      if (fromCore == null || latestCore == null) {
+        throw new OBException(OBMessageUtils.messageBD("ETDEP_Invalid_Core_Versions") + version);
+      }
+
       List<PackageDependency> dependencies = packageVersion.getETDEPPackageDependencyList();
       for (PackageDependency dep : dependencies) {
         String key = dep.getGroup() + ":" + dep.getArtifact();
@@ -178,5 +201,57 @@ public class SelectorChangeVersion extends BaseActionHandler {
     }
 
     return dependencyInfo;
+  }
+
+  private PackageVersion getPackageVersion(Package depPackage, String version) {
+    OBCriteria<PackageVersion> versionCriteria = OBDal.getInstance().createCriteria(PackageVersion.class);
+    versionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_PACKAGE, depPackage));
+    versionCriteria.add(Restrictions.eq(PackageVersion.PROPERTY_VERSION, version));
+    versionCriteria.setMaxResults(1);
+    return (PackageVersion) versionCriteria.uniqueResult();
+  }
+
+  private PackageDependency getEtendoCoreDependency(PackageVersion packageVersion) {
+    for (PackageDependency dep : packageVersion.getETDEPPackageDependencyList()) {
+        if (StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
+            return dep;
+        }
+    }
+    return null;
+  }
+  
+  public boolean isCoreVersionCompatible(String currentCoreVersionRange, String requiredCoreVersionRange) {
+    try {
+      String[] currentRange = currentCoreVersionRange.split(",");
+      String[] requiredRange = requiredCoreVersionRange.split(",");
+
+      String currentStart = currentRange.length > 0 && StringUtils.isNotBlank(currentRange[0]) ? StringUtils.trim(StringUtils.substring(currentRange[0], 1)) : "";
+      String currentEnd = currentRange.length > 1 && StringUtils.isNotBlank(currentRange[1]) ? StringUtils.trim(StringUtils.substring(currentRange[1], 0, currentRange[1].length() - 1)) : "";
+
+      String requiredStart = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) ? StringUtils.trim(StringUtils.substring(requiredRange[0], 1)) : "";
+      String requiredEnd = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) ? StringUtils.trim(StringUtils.substring(requiredRange[1], 0, requiredRange[1].length() - 1)) : "";
+
+      boolean startIncluded = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) && StringUtils.startsWith(requiredRange[0], "[");
+      boolean endIncluded = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) && StringUtils.endsWith(requiredRange[1], "]");
+
+      return (compareVersions(currentStart, requiredStart) <= 0 || (startIncluded && compareVersions(currentStart, requiredStart) == 0)) &&
+          (compareVersions(currentEnd, requiredEnd) >= 0 || (endIncluded && compareVersions(currentEnd, requiredEnd) == 0));
+    } catch (NumberFormatException e) {
+      return false;
+    }
+  }
+
+  private int compareVersions(String version1, String version2) {
+    String[] v1 = version1.split("\\.");
+    String[] v2 = version2.split("\\.");
+
+    for (int i = 0; i < Math.max(v1.length, v2.length); i++) {
+      int num1 = i < v1.length ? Integer.parseInt(v1[i]) : 0;
+      int num2 = i < v2.length ? Integer.parseInt(v2[i]) : 0;
+      if (num1 != num2) {
+        return Integer.compare(num1, num2);
+      }
+    }
+    return 0;
   }
 }

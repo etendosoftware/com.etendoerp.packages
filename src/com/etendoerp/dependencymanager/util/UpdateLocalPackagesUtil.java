@@ -4,6 +4,8 @@ import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.dom4j.Element;
 import org.openbravo.base.session.OBPropertiesProvider;
 import org.openbravo.dal.core.OBContext;
@@ -31,6 +33,8 @@ public class UpdateLocalPackagesUtil {
   public static final String GROUP = "group";
   public static final String ARTIFACT = "artifact";
   public static final String VERSION = "version";
+  public static final String FROM_CORE = "fromCore";
+  public static final String LATEST_CORE = "latestCore";
   public static final String EXTERNAL_DEPENDENCY = "externalDependency";
   public static final String DEPENDENCY_VERSION = "dependencyVersion";
   public static final String ISBUNDLE = "isBundle";
@@ -124,6 +128,9 @@ public class UpdateLocalPackagesUtil {
       packageVersion.setVersion(packageElement.elementText(VERSION));
       packageVersion.setActive(
           BooleanUtils.toBooleanObject(packageElement.elementText(ACTIVE)));
+      packageVersion.setFromCore(packageElement.elementText(FROM_CORE));
+      packageVersion.setLatestCore(packageElement.elementText(LATEST_CORE));
+
       OBDal.getInstance().save(packageVersion);
     }
     OBDal.getInstance().flush();
