@@ -41,8 +41,20 @@
         <default/>
         <onCreateDefault/>
       </column>
-      <column name="INSTALL" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
-        <default><![CDATA[Y]]></default>
+      <column name="CHANGELOG" primaryKey="false" required="false" type="CLOB" size="4000" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="ADD_DEPENDENCY" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="FROM_CORE" primaryKey="false" required="false" type="VARCHAR" size="255" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="LATEST_CORE" primaryKey="false" required="false" type="VARCHAR" size="255" autoIncrement="false">
+        <default/>
         <onCreateDefault/>
       </column>
       <foreign-key foreignTable="AD_CLIENT" name="ETDEP_PKG_VER_AD_CLIENT">
@@ -54,6 +66,7 @@
       <foreign-key foreignTable="ETDEP_PACKAGE" name="ETDEP_PKG_VER_PKG">
         <reference local="ETDEP_PACKAGE_ID" foreign="ETDEP_PACKAGE_ID"/>
       </foreign-key>
+      <check name="ETDEP_PKG_ADD_DEP"><![CDATA[ADD_DEPENDENCY IN ('Y', 'N')]]></check>
       <check name="ETDEP_PKG_VER_ACT"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
     </table>
   </database>
