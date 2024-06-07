@@ -7,7 +7,7 @@
 */
 
 group          = "com.etendoerp"
-version        = "1.0.2"
+version        = "1.0.3"
 description    = "Dependency Manager"
 ext.artifact   = "dependencymanager"
 ext.repository = "https://maven.pkg.github.com/etendosoftware/com.etendoerp.platform.extensions"
