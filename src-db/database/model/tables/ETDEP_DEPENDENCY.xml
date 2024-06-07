@@ -53,15 +53,15 @@
         <default><![CDATA[N]]></default>
         <onCreateDefault><![CDATA[N]]></onCreateDefault>
       </column>
+      <column name="CHANGEFORMAT" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault><![CDATA[N]]></onCreateDefault>
+      </column>
       <column name="VERSION_STATUS" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
         <default/>
         <onCreateDefault/>
       </column>
       <column name="CHANGE_VERSION" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
-        <default><![CDATA[N]]></default>
-        <onCreateDefault><![CDATA[N]]></onCreateDefault>
-      </column>
-      <column name="CHANGEFORMAT" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
         <default><![CDATA[N]]></default>
         <onCreateDefault><![CDATA[N]]></onCreateDefault>
       </column>
