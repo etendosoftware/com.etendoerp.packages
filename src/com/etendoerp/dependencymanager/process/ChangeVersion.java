@@ -60,7 +60,7 @@ public class ChangeVersion extends BaseProcessActionHandler {
         log.debug("Changing version of dependency: {} to version ID: {}", dependency.getEntityName(), newVersionId);
         String currentVersion = dependency.getVersion();
         String updateToVersion = newVersion.getVersion();
-        String latestVersion = InstallDependency.fetchLatestVersion(dependency.getGroup(), dependency.getArtifact());
+        String latestVersion = PackageUtil.getLastPackageVersion(newVersion.getPackage()).getVersion();
 
         dependency.setVersion(updateToVersion);
         dependency.setInstallationStatus(PENDING);

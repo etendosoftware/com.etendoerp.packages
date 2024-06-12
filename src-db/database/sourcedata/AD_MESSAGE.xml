@@ -462,7 +462,7 @@
 <!--EEA25C4BCAAA4863BC8C61B748521B95-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--EEA25C4BCAAA4863BC8C61B748521B95-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--EEA25C4BCAAA4863BC8C61B748521B95-->  <VALUE><![CDATA[ETDEP_Will_Delete_Source_Dirs]]></VALUE>
-<!--EEA25C4BCAAA4863BC8C61B748521B95-->  <MSGTEXT><![CDATA[The %s module is in <b>%s</b> format, this means that the module's source directory located at <i>modules/%s</i> will be irreversibly deleted after this process finishes]]></MSGTEXT>
+<!--EEA25C4BCAAA4863BC8C61B748521B95-->  <MSGTEXT><![CDATA[The %s module is in <b>%s</b> format, which means that the source directory of the module located in <i>modules/%s</i> must be removed after this process is finished, in order not to have duplicate dependencies.]]></MSGTEXT>
 <!--EEA25C4BCAAA4863BC8C61B748521B95-->  <MSGTYPE><![CDATA[W]]></MSGTYPE>
 <!--EEA25C4BCAAA4863BC8C61B748521B95-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--EEA25C4BCAAA4863BC8C61B748521B95-->  <ISINCLUDEINI18N><![CDATA[N]]></ISINCLUDEINI18N>
