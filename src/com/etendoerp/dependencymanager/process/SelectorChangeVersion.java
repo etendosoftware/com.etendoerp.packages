@@ -11,6 +11,7 @@ import org.openbravo.dal.service.OBDal;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.base.exception.OBException;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
+import org.openbravo.model.ad.module.Module;
 
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
@@ -58,30 +59,22 @@ public class SelectorChangeVersion extends BaseActionHandler {
       Package depPackage = fetchPackageByGroupAndArtifact(depGroup, artifact);
 
       // Fetch the package versions for the current and updated versions
-      PackageVersion currentPackageVersion = getPackageVersion(depPackage, currentVersion);
       PackageVersion updateToPackageVersion = getPackageVersion(depPackage, updateToVersion);
+      String currentCoreVersion = OBDal.getInstance().get(Module.class, "0").getVersion();
 
-      if (currentPackageVersion == null || updateToPackageVersion == null) {
-        throw new OBException(OBMessageUtils.messageBD("ETDEP_Version_Not_Found"));
-      }
-
-      PackageDependency currentEtendoCoreDependency = getEtendoCoreDependency(currentPackageVersion);
       PackageDependency updateToEtendoCoreDependency = getEtendoCoreDependency(updateToPackageVersion);
-
-      if (currentEtendoCoreDependency == null || updateToEtendoCoreDependency == null) {
+      // Check if the selected version is not compatible with the current core version
+      String fromCore = updateToPackageVersion.getFromCore();
+      String latestCore = updateToPackageVersion.getLatestCore();
+      if (StringUtils.isEmpty(fromCore) || (!StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore))) {
         throw new OBException(OBMessageUtils.messageBD("ETDEP_Core_Version_Not_Found"));
       }
-
-      String currentCoreVersion = currentEtendoCoreDependency.getVersion();
-      String updateToCoreVersion = updateToEtendoCoreDependency.getVersion();
-
-      // Check if the selected version is not compatible with the current core version
-      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, updateToCoreVersion);
+      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, fromCore, latestCore);
       jsonResponse.put("warning", !isCompatible);
 
       // Include additional compatibility details in the response
       jsonResponse.put("currentCoreVersion", currentCoreVersion);
-      jsonResponse.put("updateToCoreVersion", updateToCoreVersion);
+      jsonResponse.put("updateToCoreVersion", updateToEtendoCoreDependency != null ? updateToEtendoCoreDependency.getVersion() : "");
 
       // Compare the package versions and construct the comparison results
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
@@ -142,7 +135,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
       String fromCore = packageVersion.getFromCore();
       String latestCore = packageVersion.getLatestCore();
 
-      if (fromCore == null || latestCore == null) {
+      if (StringUtils.isEmpty(fromCore) || (!StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore))) {
         throw new OBException(OBMessageUtils.messageBD("ETDEP_Invalid_Core_Versions") + version);
       }
 
@@ -211,6 +204,16 @@ public class SelectorChangeVersion extends BaseActionHandler {
     return (PackageVersion) versionCriteria.uniqueResult();
   }
 
+  /**
+   * Retrieves the Etendo Core dependency from a given package version.
+   *
+   * This method iterates over the list of dependencies of the provided package version.
+   * If a dependency with the artifact name "Etendo Core" is found, it is returned.
+   * If no such dependency is found, the method returns null.
+   *
+   * @param packageVersion The package version from which to retrieve the Etendo Core dependency.
+   * @return The Etendo Core dependency if found, null otherwise.
+   */
   private PackageDependency getEtendoCoreDependency(PackageVersion packageVersion) {
     for (PackageDependency dep : packageVersion.getETDEPPackageDependencyList()) {
         if (StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
@@ -219,28 +222,35 @@ public class SelectorChangeVersion extends BaseActionHandler {
     }
     return null;
   }
-  
-  public boolean isCoreVersionCompatible(String currentCoreVersionRange, String requiredCoreVersionRange) {
+
+  /**
+   * Checks if the current core version is compatible with the required version range.
+   *
+   * @param currentCoreVersion The current version of the core.
+   * @param requiredStart The start of the required version range.
+   * @param requiredEnd The end of the required version range. If this is empty, it means that all versions higher than the start version are compatible.
+   * @return true if the current core version is within the required version range, false otherwise.
+   * @throws NumberFormatException if the version strings cannot be parsed into integers.
+   */
+  public boolean isCoreVersionCompatible(String currentCoreVersion, String requiredStart, String requiredEnd) {
     try {
-      String[] currentRange = currentCoreVersionRange.split(",");
-      String[] requiredRange = requiredCoreVersionRange.split(",");
-
-      String currentStart = currentRange.length > 0 && StringUtils.isNotBlank(currentRange[0]) ? StringUtils.trim(StringUtils.substring(currentRange[0], 1)) : "";
-      String currentEnd = currentRange.length > 1 && StringUtils.isNotBlank(currentRange[1]) ? StringUtils.trim(StringUtils.substring(currentRange[1], 0, currentRange[1].length() - 1)) : "";
-
-      String requiredStart = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) ? StringUtils.trim(StringUtils.substring(requiredRange[0], 1)) : "";
-      String requiredEnd = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) ? StringUtils.trim(StringUtils.substring(requiredRange[1], 0, requiredRange[1].length() - 1)) : "";
-
-      boolean startIncluded = requiredRange.length > 0 && StringUtils.isNotBlank(requiredRange[0]) && StringUtils.startsWith(requiredRange[0], "[");
-      boolean endIncluded = requiredRange.length > 1 && StringUtils.isNotBlank(requiredRange[1]) && StringUtils.endsWith(requiredRange[1], "]");
-
-      return (compareVersions(currentStart, requiredStart) <= 0 || (startIncluded && compareVersions(currentStart, requiredStart) == 0)) &&
-          (compareVersions(currentEnd, requiredEnd) >= 0 || (endIncluded && compareVersions(currentEnd, requiredEnd) == 0));
+      return compareVersions(currentCoreVersion, requiredStart) >= 0 && (StringUtils.isEmpty(requiredEnd) || compareVersions(currentCoreVersion, requiredEnd) <= 0);
     } catch (NumberFormatException e) {
       return false;
     }
   }
 
+  /**
+   * Compares two version strings.
+   *
+   * The version strings are expected to be in the format "x.y.z", where x, y, and z are integers.
+   * The method splits the version strings by the dot character and compares the resulting parts from left to right.
+   * If a part in one version string is missing, it is treated as zero.
+   *
+   * @param version1 The first version string to compare.
+   * @param version2 The second version string to compare.
+   * @return A negative integer, zero, or a positive integer if the first version is less than, equal to, or greater than the second version respectively.
+   */
   private int compareVersions(String version1, String version2) {
     String[] v1 = version1.split("\\.");
     String[] v2 = version2.split("\\.");

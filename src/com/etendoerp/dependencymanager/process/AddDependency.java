@@ -210,17 +210,10 @@ public class AddDependency extends BaseActionHandler {
       dependency.setGroup(packageVersion.getPackage().getGroup());
       dependency.setArtifact(packageVersion.getPackage().getArtifact());
       dependency.setInstallationStatus(DependencyUtil.STATUS_PENDING);
-      String versionStatus;
-      if (dependencyList.isEmpty()) {
-        dependency.setFormat(DependencyUtil.FORMAT_JAR);
-        dependency.setExternalDependency(true);
-        versionStatus = DependencyUtil.UNTRACKED_STATUS;
-      } else {
-        dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
-        PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
-        versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(),
-            latestPackageVersion.getVersion());
-      }
+      dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
+      PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+      String versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(),
+          latestPackageVersion.getVersion());
       dependency.setVersionStatus(versionStatus);
       OBDal.getInstance().save(dependency);
       needFlush = true;
