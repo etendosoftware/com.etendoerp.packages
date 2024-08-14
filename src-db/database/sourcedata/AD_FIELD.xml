@@ -340,7 +340,7 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--473DE1605BE54D8EA0A397455223BDB6-->  <AD_CLIENT_ID><![CDATA[0]]></AD_CLIENT_ID>
 <!--473DE1605BE54D8EA0A397455223BDB6-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--473DE1605BE54D8EA0A397455223BDB6-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
-<!--473DE1605BE54D8EA0A397455223BDB6-->  <NAME><![CDATA[Delete Depedency]]></NAME>
+<!--473DE1605BE54D8EA0A397455223BDB6-->  <NAME><![CDATA[Delete Dependency]]></NAME>
 <!--473DE1605BE54D8EA0A397455223BDB6-->  <DESCRIPTION><![CDATA[Remove the dependencies that are not installed.]]></DESCRIPTION>
 <!--473DE1605BE54D8EA0A397455223BDB6-->  <HELP><![CDATA[There are three possible outcomes for this process:
 * If the dependency is not installed, it removes it.

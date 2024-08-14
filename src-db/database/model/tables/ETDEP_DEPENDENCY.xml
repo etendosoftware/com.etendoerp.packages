@@ -85,6 +85,7 @@
       </foreign-key>
       <check name="ETDEP_CHECK_CHFORMAT"><![CDATA[CHANGEFORMAT IN ('Y', 'N')]]></check>
       <check name="ETDEP_CHK_CV"><![CDATA[CHANGE_VERSION IN ('Y', 'N')]]></check>
+      <check name="ETDEP_CHK_DELDE"><![CDATA[DELETEDEPENDENCY IN ('Y', 'N')]]></check>
       <check name="ETDEP_CHK_IA"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
       <check name="ETDEP_CHK_UD"><![CDATA[UNINSTALLDEPENDENCY IN ('Y', 'N')]]></check>
       <check name="ETDEP_EXT_DEP_CHK"><![CDATA[ISEXTERNALDEPENDENCY IN ('Y', 'N')]]></check>

@@ -51,6 +51,11 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--141E442629E640B4AE46690094E0F5DD-->  <COLUMNNAME><![CDATA[Deletedependency]]></COLUMNNAME>
 <!--141E442629E640B4AE46690094E0F5DD-->  <NAME><![CDATA[Delete Dependency]]></NAME>
 <!--141E442629E640B4AE46690094E0F5DD-->  <PRINTNAME><![CDATA[Delete Dependency]]></PRINTNAME>
+<!--141E442629E640B4AE46690094E0F5DD-->  <DESCRIPTION><![CDATA[Remove the dependencies that are not installed.]]></DESCRIPTION>
+<!--141E442629E640B4AE46690094E0F5DD-->  <HELP><![CDATA[There are three possible outcomes for this process:
+* If the dependency is not installed, it removes it.
+* If the dependency is installed and it is in Jar format, it removes it.
+* If the dependency is installed and it is in Source or Local format, a warning appears and you have to delete the module inside the "modules" folder.]]></HELP>
 <!--141E442629E640B4AE46690094E0F5DD-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--141E442629E640B4AE46690094E0F5DD-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
 <!--141E442629E640B4AE46690094E0F5DD--></AD_ELEMENT>

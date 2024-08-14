@@ -12,6 +12,12 @@ import org.openbravo.erpCommon.utility.OBMessageUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Handles the process of deleting a dependency.
+ * This class extends {@link BaseProcessActionHandler} and manages the flow for
+ * uninstalling dependencies, including handling JSON input and generating responses.
+ */
+
 public class DeleteDependency extends BaseProcessActionHandler {
 
     /**
@@ -24,9 +30,9 @@ public class DeleteDependency extends BaseProcessActionHandler {
      */
     @Override
     protected JSONObject doExecute(Map<String, Object> parameters, String content) {
-        OBContext.setAdminMode(true);
 
         try {
+            OBContext.setAdminMode(true);
             JSONObject jsonResponse = new JSONObject(content);
             uninstallDependency(jsonResponse);
             return buildSuccessResponse(jsonResponse);
