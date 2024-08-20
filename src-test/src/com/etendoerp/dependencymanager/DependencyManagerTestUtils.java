@@ -14,6 +14,9 @@ import org.openbravo.dal.service.OBDal;
 import org.openbravo.model.ad.module.Module;
 
 import com.etendoerp.dependencymanager.data.Dependency;
+import com.etendoerp.dependencymanager.data.Package;
+import com.etendoerp.dependencymanager.data.PackageDependency;
+import com.etendoerp.dependencymanager.data.PackageVersion;
 import com.etendoerp.dependencymanager.process.UninstallDependency;
 
 public class DependencyManagerTestUtils {
@@ -85,5 +88,38 @@ public class DependencyManagerTestUtils {
       return super.execute(parameters, content);
     }
 
+  }
+
+  public static Package createPackage(String artifactName) {
+    Package pkg = OBProvider.getInstance().get(Package.class);
+    pkg.setArtifact(artifactName);
+    pkg.setGroup("com.etendoerp");
+    pkg.setActive(true);
+    OBDal.getInstance().save(pkg);
+    return pkg;
+  }
+
+  public static PackageVersion createPackageVersion(String version, Package pkg) {
+    PackageVersion packageVersion = OBProvider.getInstance().get(PackageVersion.class);
+    packageVersion.setVersion(version);
+    packageVersion.setFromCore("21.4.0");
+    packageVersion.setLatestCore("24.2.0");
+    packageVersion.setActive(true);
+    packageVersion.setPackage(pkg);
+    OBDal.getInstance().save(packageVersion);
+    return packageVersion;
+  }
+
+  public static void createPackageDependency(PackageVersion packageVersion, PackageVersion dependencyVersion,
+      String artifact) {
+    PackageDependency dependency = OBProvider.getInstance().get(PackageDependency.class);
+    dependency.setGroup("com.etendoerp");
+    dependency.setArtifact(artifact);
+    dependency.setVersion(DependencyManagerTestConstants.FIRST_VERSION);
+    dependency.setActive(true);
+    dependency.setExternalDependency(false);
+    dependency.setDependencyVersion(dependencyVersion);
+    dependency.setPackageVersion(packageVersion);
+    OBDal.getInstance().save(dependency);
   }
 }
