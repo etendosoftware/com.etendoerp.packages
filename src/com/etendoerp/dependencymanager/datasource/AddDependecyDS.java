@@ -22,7 +22,7 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
 
   @Override
   protected List<Map<String, Object>> getData(Map<String, String> parameters, int startRow, int endRow) {
-    final List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+    final List<Map<String, Object>> result = new ArrayList<>();
     try {
       final String strETDEPPackageVersionId = parameters.get("@ETDEP_Package_Version.id@");
       final PackageVersion packageVersion = OBDal.getInstance().get(PackageVersion.class, strETDEPPackageVersionId);

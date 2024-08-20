@@ -13,6 +13,22 @@ import com.etendoerp.dependencymanager.data.PackageVersion;
 
 public class DependencyTreeBuilder {
 
+  /**
+   * Private constructor to prevent instantiation of this utility class.
+   */
+  private DependencyTreeBuilder() {
+
+  }
+
+  /**
+   * Creates a dependency tree for the given package version.
+   *
+   * @param packageVersion
+   *     the package version to process
+   * @return a list of dependencies, excluding 'etendo-core'
+   * @throws OBException
+   *     if an error occurs while resolving dependencies
+   */
   public static List<PackageDependency> createDependencyTree(PackageVersion packageVersion) {
     List<PackageDependency> dependencyList = packageVersion.getETDEPPackageDependencyList();
     try {
@@ -33,15 +49,29 @@ public class DependencyTreeBuilder {
     }
   }
 
+  /**
+   * Removes 'etendo-core' dependencies from the list.
+   *
+   * @param dependencyList
+   *     the list of dependencies
+   */
   private static void removeDependecyCore(List<PackageDependency> dependencyList) {
     dependencyList.removeIf(dependency -> dependency.getArtifact().equals("etendo-core"));
   }
 
+  /**
+   * Adds a dependency to the map, replacing it if a newer version is found.
+   *
+   * @param dependencyMap
+   *     the map of dependencies
+   * @param dependency
+   *     the dependency to add
+   */
   private static void addDependency(Map<String, PackageDependency> dependencyMap, PackageDependency dependency) {
     String key = dependency.getArtifact();
     if (dependencyMap.containsKey(key)) {
       PackageDependency existingDependency = dependencyMap.get(key);
-        if (PackageUtil.compareVersions(dependency.getVersion(), existingDependency.getVersion()) > 0) {
+      if (PackageUtil.compareVersions(dependency.getVersion(), existingDependency.getVersion()) > 0) {
         dependencyMap.put(key, dependency);
       }
     } else {
@@ -49,6 +79,15 @@ public class DependencyTreeBuilder {
     }
   }
 
+  /**
+   * Recursively searches for sub-dependencies, excluding 'etendo-core'.
+   *
+   * @param dependency
+   *     the dependency to process
+   * @param dependencyMap
+   *     the map of dependencies
+   * @return a list of sub-dependencies
+   */
   private static List<PackageDependency> searchDependency(PackageDependency dependency,
       Map<String, PackageDependency> dependencyMap) {
     if (dependency.isExternalDependency()) {

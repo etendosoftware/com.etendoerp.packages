@@ -90,6 +90,12 @@ public class DependencyManagerTestUtils {
 
   }
 
+  /**
+   * Creates a new Package with the given artifact name and saves it to the database.
+   *
+   * @param artifactName the name of the artifact.
+   * @return the created Package.
+   */
   public static Package createPackage(String artifactName) {
     Package pkg = OBProvider.getInstance().get(Package.class);
     pkg.setArtifact(artifactName);
@@ -99,6 +105,14 @@ public class DependencyManagerTestUtils {
     return pkg;
   }
 
+  /**
+   * Creates a new PackageVersion with the specified version and associated package,
+   * and saves it to the database.
+   *
+   * @param version the version of the package.
+   * @param pkg the Package to associate with the PackageVersion.
+   * @return the created PackageVersion.
+   */
   public static PackageVersion createPackageVersion(String version, Package pkg) {
     PackageVersion packageVersion = OBProvider.getInstance().get(PackageVersion.class);
     packageVersion.setVersion(version);
@@ -110,6 +124,14 @@ public class DependencyManagerTestUtils {
     return packageVersion;
   }
 
+  /**
+   * Creates a new PackageDependency between the given package version and its dependency version,
+   * and saves it to the database.
+   *
+   * @param packageVersion the PackageVersion that will have the dependency.
+   * @param dependencyVersion the PackageVersion that is the dependency.
+   * @param artifact the artifact name of the dependency.
+   */
   public static void createPackageDependency(PackageVersion packageVersion, PackageVersion dependencyVersion,
       String artifact) {
     PackageDependency dependency = OBProvider.getInstance().get(PackageDependency.class);
