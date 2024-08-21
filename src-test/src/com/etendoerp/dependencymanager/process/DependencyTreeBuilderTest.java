@@ -1,5 +1,7 @@
 package com.etendoerp.dependencymanager.process;
 
+import static com.etendoerp.dependencymanager.DependencyManagerTestConstants.FIRST_VERSION;
+import static com.etendoerp.dependencymanager.DependencyManagerTestConstants.GROUP_COM_ETENDOERP;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
@@ -22,6 +24,12 @@ import com.etendoerp.dependencymanager.util.DependencyTreeBuilder;
 
 public class DependencyTreeBuilderTest extends WeldBaseTest {
 
+  public static final String FROM_CORE = "21.4.0";
+  public static final String LATEST_CORE = "24.2.0";
+  public static final String PACKGE_1 = "packge1";
+  public static final String PACKGE_2 = "packge2";
+  public static final String PACKGE_3 = "packge3";
+
   @Override
   @Before
   public void setUp() throws Exception {
@@ -37,16 +45,21 @@ public class DependencyTreeBuilderTest extends WeldBaseTest {
   @Test
   public void testFindDependenciesFromPackageVersion() {
 
-    Package package1 = DependencyManagerTestUtils.createPackage("packge1");
-    Package package2 = DependencyManagerTestUtils.createPackage("packge2");
-    Package package3 = DependencyManagerTestUtils.createPackage("packge3");
+    Package package1 = DependencyManagerTestUtils.createPackage(PACKGE_1, GROUP_COM_ETENDOERP);
+    Package package2 = DependencyManagerTestUtils.createPackage(PACKGE_2, GROUP_COM_ETENDOERP);
+    Package package3 = DependencyManagerTestUtils.createPackage(PACKGE_3, GROUP_COM_ETENDOERP);
 
-    PackageVersion packageVersion1 = DependencyManagerTestUtils.createPackageVersion("1.0.0", package1);
-    PackageVersion packageVersion2 = DependencyManagerTestUtils.createPackageVersion("2.0.0", package2);
-    PackageVersion packageVersion3 = DependencyManagerTestUtils.createPackageVersion("3.0.0", package3);
+    PackageVersion packageVersion1 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package1, FROM_CORE,
+        LATEST_CORE);
+    PackageVersion packageVersion2 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package2, FROM_CORE,
+        LATEST_CORE);
+    PackageVersion packageVersion3 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package3, FROM_CORE,
+        LATEST_CORE);
 
-    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, "module.jar1");
-    DependencyManagerTestUtils.createPackageDependency(packageVersion2, packageVersion3, "module.jar2");
+    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, "module.jar1",
+        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
+    DependencyManagerTestUtils.createPackageDependency(packageVersion2, packageVersion3, "module.jar2",
+        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
 
     OBDal.getInstance().flush();
     OBDal.getInstance().refresh(packageVersion1);
@@ -59,16 +72,21 @@ public class DependencyTreeBuilderTest extends WeldBaseTest {
 
   @Test
   public void testRemoveEtendoCoreDependencyFromPackageVersion() {
-    Package package1 = DependencyManagerTestUtils.createPackage("packge1");
-    Package package2 = DependencyManagerTestUtils.createPackage("packge2");
-    Package package3 = DependencyManagerTestUtils.createPackage("packge3");
+    Package package1 = DependencyManagerTestUtils.createPackage(PACKGE_1, GROUP_COM_ETENDOERP);
+    Package package2 = DependencyManagerTestUtils.createPackage(PACKGE_2, GROUP_COM_ETENDOERP);
+    Package package3 = DependencyManagerTestUtils.createPackage(PACKGE_3, GROUP_COM_ETENDOERP);
 
-    PackageVersion packageVersion1 = DependencyManagerTestUtils.createPackageVersion("1.0.0", package1);
-    PackageVersion packageVersion2 = DependencyManagerTestUtils.createPackageVersion("2.0.0", package2);
-    PackageVersion packageVersion3 = DependencyManagerTestUtils.createPackageVersion("3.0.0", package3);
+    PackageVersion packageVersion1 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package1, FROM_CORE,
+        LATEST_CORE);
+    PackageVersion packageVersion2 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package2, FROM_CORE,
+        LATEST_CORE);
+    PackageVersion packageVersion3 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package3, FROM_CORE,
+        LATEST_CORE);
 
-    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, "module.jar1");
-    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion3, "etendo-core");
+    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, "module.jar1",
+        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
+    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion3, "etendo-core",
+        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
 
     OBDal.getInstance().flush();
     OBDal.getInstance().refresh(packageVersion1);

@@ -93,14 +93,16 @@ public class DependencyManagerTestUtils {
   /**
    * Creates a new Package with the given artifact name and saves it to the database.
    *
-   * @param artifactName the name of the artifact.
+   * @param artifact
+   *     the artifact name of the dependency.
+   * @param group
+   *     the group name of the dependency.
    * @return the created Package.
    */
-  public static Package createPackage(String artifactName) {
+  public static Package createPackage(String artifact, String group) {
     Package pkg = OBProvider.getInstance().get(Package.class);
-    pkg.setArtifact(artifactName);
-    pkg.setGroup("com.etendoerp");
-    pkg.setActive(true);
+    pkg.setArtifact(artifact);
+    pkg.setGroup(group);
     OBDal.getInstance().save(pkg);
     return pkg;
   }
@@ -109,16 +111,21 @@ public class DependencyManagerTestUtils {
    * Creates a new PackageVersion with the specified version and associated package,
    * and saves it to the database.
    *
-   * @param version the version of the package.
-   * @param pkg the Package to associate with the PackageVersion.
+   * @param version
+   *     the version of the package.
+   * @param pkg
+   *     the Package to associate with the PackageVersion.
+   * @param fromCore
+   *     the initial core version that this package is compatible with.
+   * @param latestCore
+   *     the latest core version that this package is compatible with.
    * @return the created PackageVersion.
    */
-  public static PackageVersion createPackageVersion(String version, Package pkg) {
+  public static PackageVersion createPackageVersion(String version, Package pkg, String fromCore, String latestCore) {
     PackageVersion packageVersion = OBProvider.getInstance().get(PackageVersion.class);
     packageVersion.setVersion(version);
-    packageVersion.setFromCore("21.4.0");
-    packageVersion.setLatestCore("24.2.0");
-    packageVersion.setActive(true);
+    packageVersion.setFromCore(fromCore);
+    packageVersion.setLatestCore(latestCore);
     packageVersion.setPackage(pkg);
     OBDal.getInstance().save(packageVersion);
     return packageVersion;
@@ -128,18 +135,26 @@ public class DependencyManagerTestUtils {
    * Creates a new PackageDependency between the given package version and its dependency version,
    * and saves it to the database.
    *
-   * @param packageVersion the PackageVersion that will have the dependency.
-   * @param dependencyVersion the PackageVersion that is the dependency.
-   * @param artifact the artifact name of the dependency.
+   * @param packageVersion
+   *     the PackageVersion that will have the dependency.
+   * @param dependencyVersion
+   *     the PackageVersion that is the dependency.
+   * @param artifact
+   *     the artifact name of the dependency.
+   * @param group
+   *     the group name of the dependency.
+   * @param version
+   *     the version of the dependency.
+   * @param isExternalDependency
+   *     whether the dependency is external.
    */
   public static void createPackageDependency(PackageVersion packageVersion, PackageVersion dependencyVersion,
-      String artifact) {
+      String artifact, String group, String version, boolean isExternalDependency) {
     PackageDependency dependency = OBProvider.getInstance().get(PackageDependency.class);
-    dependency.setGroup("com.etendoerp");
+    dependency.setGroup(group);
     dependency.setArtifact(artifact);
-    dependency.setVersion(DependencyManagerTestConstants.FIRST_VERSION);
-    dependency.setActive(true);
-    dependency.setExternalDependency(false);
+    dependency.setVersion(version);
+    dependency.setExternalDependency(isExternalDependency);
     dependency.setDependencyVersion(dependencyVersion);
     dependency.setPackageVersion(packageVersion);
     OBDal.getInstance().save(dependency);
