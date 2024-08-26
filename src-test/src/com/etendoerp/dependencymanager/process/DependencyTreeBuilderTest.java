@@ -34,17 +34,17 @@ public class DependencyTreeBuilderTest extends WeldBaseTest {
   @Before
   public void setUp() throws Exception {
     super.setUp();
+    OBContext currentContext = OBContext.getOBContext();
+
     OBContext.setOBContext(TestConstants.Users.SYSTEM, TestConstants.Roles.SYS_ADMIN, TestConstants.Clients.SYSTEM,
         TestConstants.Orgs.MAIN);
-    VariablesSecureApp vsa = new VariablesSecureApp(OBContext.getOBContext().getUser().getId(),
-        OBContext.getOBContext().getCurrentClient().getId(), OBContext.getOBContext().getCurrentOrganization().getId(),
-        OBContext.getOBContext().getRole().getId());
+    VariablesSecureApp vsa = new VariablesSecureApp(currentContext.getUser().getId(),
+        currentContext.getCurrentClient().getId(), currentContext.getCurrentOrganization().getId(),
+        currentContext.getRole().getId());
     RequestContext.get().setVariableSecureApp(vsa);
   }
 
-  @Test
-  public void testFindDependenciesFromPackageVersion() {
-
+  private List<PackageVersion> setupPackageVersions() {
     Package package1 = DependencyManagerTestUtils.createPackage(PACKGE_1, GROUP_COM_ETENDOERP);
     Package package2 = DependencyManagerTestUtils.createPackage(PACKGE_2, GROUP_COM_ETENDOERP);
     Package package3 = DependencyManagerTestUtils.createPackage(PACKGE_3, GROUP_COM_ETENDOERP);
@@ -56,44 +56,59 @@ public class DependencyTreeBuilderTest extends WeldBaseTest {
     PackageVersion packageVersion3 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package3, FROM_CORE,
         LATEST_CORE);
 
-    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, "module.jar1",
-        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
-    DependencyManagerTestUtils.createPackageDependency(packageVersion2, packageVersion3, "module.jar2",
-        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
+    List<PackageVersion> result = new java.util.ArrayList<>(List.of());
+    result.add(packageVersion1);
+    result.add(packageVersion2);
+    result.add(packageVersion3);
+    return result;
+  }
+
+  private void createDependenciesTwoLevels(PackageVersion packageVersion1, String module1,
+      PackageVersion packageVersion2, String module2, PackageVersion packageVersion3) {
+    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, module1, GROUP_COM_ETENDOERP,
+        FIRST_VERSION, false);
+    DependencyManagerTestUtils.createPackageDependency(packageVersion2, packageVersion3, module2, GROUP_COM_ETENDOERP,
+        FIRST_VERSION, false);
+  }
+
+  private void createDependenciesOneLevel(PackageVersion packageVersion1, String module1,
+      PackageVersion packageVersion2, String module2, PackageVersion packageVersion3) {
+    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, module1, GROUP_COM_ETENDOERP,
+        FIRST_VERSION, false);
+    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion3, module2, GROUP_COM_ETENDOERP,
+        FIRST_VERSION, false);
+  }
+
+  @Test
+  public void testFindDependenciesFromPackageVersion2() {
+    List<PackageVersion> packageVersions = setupPackageVersions();
+
+    createDependenciesTwoLevels(packageVersions.get(0), "module.jar1", packageVersions.get(1), "module.jar2",
+        packageVersions.get(2));
 
     OBDal.getInstance().flush();
-    OBDal.getInstance().refresh(packageVersion1);
-    OBDal.getInstance().refresh(packageVersion2);
+    OBDal.getInstance().refresh(packageVersions.get(0));
+    OBDal.getInstance().refresh(packageVersions.get(1));
 
-    List<PackageDependency> dependencyList = DependencyTreeBuilder.createDependencyTree(packageVersion1);
-    assertEquals(1, packageVersion1.getETDEPPackageDependencyList().size());
+    List<PackageDependency> dependencyList = DependencyTreeBuilder.createDependencyTree(packageVersions.get(0));
+
+    assertEquals(1, packageVersions.get(0).getETDEPPackageDependencyList().size());
     assertEquals(2, dependencyList.size());
   }
 
   @Test
   public void testRemoveEtendoCoreDependencyFromPackageVersion() {
-    Package package1 = DependencyManagerTestUtils.createPackage(PACKGE_1, GROUP_COM_ETENDOERP);
-    Package package2 = DependencyManagerTestUtils.createPackage(PACKGE_2, GROUP_COM_ETENDOERP);
-    Package package3 = DependencyManagerTestUtils.createPackage(PACKGE_3, GROUP_COM_ETENDOERP);
+    List<PackageVersion> packageVersions = setupPackageVersions();
 
-    PackageVersion packageVersion1 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package1, FROM_CORE,
-        LATEST_CORE);
-    PackageVersion packageVersion2 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package2, FROM_CORE,
-        LATEST_CORE);
-    PackageVersion packageVersion3 = DependencyManagerTestUtils.createPackageVersion(FIRST_VERSION, package3, FROM_CORE,
-        LATEST_CORE);
-
-    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion2, "module.jar1",
-        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
-    DependencyManagerTestUtils.createPackageDependency(packageVersion1, packageVersion3, "etendo-core",
-        GROUP_COM_ETENDOERP, FIRST_VERSION, false);
+    createDependenciesOneLevel(packageVersions.get(0), "module.jar1", packageVersions.get(1), "etendo-core",
+        packageVersions.get(2));
 
     OBDal.getInstance().flush();
-    OBDal.getInstance().refresh(packageVersion1);
-    OBDal.getInstance().refresh(packageVersion2);
+    OBDal.getInstance().refresh(packageVersions.get(0));
+    OBDal.getInstance().refresh(packageVersions.get(1));
 
-    int initialDependencyCount = packageVersion1.getETDEPPackageDependencyList().size();
-    List<PackageDependency> dependencyList = DependencyTreeBuilder.createDependencyTree(packageVersion1);
+    int initialDependencyCount = packageVersions.get(0).getETDEPPackageDependencyList().size();
+    List<PackageDependency> dependencyList = DependencyTreeBuilder.createDependencyTree(packageVersions.get(0));
     assertEquals(2, initialDependencyCount);
     assertEquals(1, dependencyList.size());
   }

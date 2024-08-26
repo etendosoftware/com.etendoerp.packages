@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.openbravo.base.exception.OBException;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
 
@@ -13,11 +15,12 @@ import com.etendoerp.dependencymanager.data.PackageVersion;
 
 public class DependencyTreeBuilder {
 
+  public static final String RELEASE = "RELEASE";
+
   /**
    * Private constructor to prevent instantiation of this utility class.
    */
   private DependencyTreeBuilder() {
-
   }
 
   /**
@@ -43,7 +46,7 @@ public class DependencyTreeBuilder {
           addDependency(dependencyMap, subDependency);
         }
       }
-      return new ArrayList<>(dependencyMap.values());
+      return dependencyMap.values().stream().filter(dependency -> !isBundle(dependency)).collect(Collectors.toList());
     } catch (Exception e) {
       throw new OBException(OBMessageUtils.messageBD("ETDEP_Dep_Resolve_Error"));
     }
@@ -69,9 +72,14 @@ public class DependencyTreeBuilder {
    */
   private static void addDependency(Map<String, PackageDependency> dependencyMap, PackageDependency dependency) {
     String key = dependency.getArtifact();
+    String newVersion = dependency.getVersion();
+
     if (dependencyMap.containsKey(key)) {
       PackageDependency existingDependency = dependencyMap.get(key);
-      if (PackageUtil.compareVersions(dependency.getVersion(), existingDependency.getVersion()) > 0) {
+      String existingVersion = existingDependency.getVersion();
+
+      if (StringUtils.equals(newVersion, RELEASE) ||
+          (!StringUtils.equals(existingVersion, RELEASE) && PackageUtil.compareVersions(newVersion, existingVersion) > 0)) {
         dependencyMap.put(key, dependency);
       }
     } else {
@@ -109,4 +117,17 @@ public class DependencyTreeBuilder {
 
     return allDependencies;
   }
+
+  /**
+   * Checks if the dependency is marked as 'bundle' based on its artifact.
+   *
+   * @param dependency
+   *     the dependency to check
+   * @return true if the dependency is a bundle, false otherwise
+   */
+  private static boolean isBundle(PackageDependency dependency) {
+    // Check if the artifact contains '.extensions'
+    return dependency.getArtifact().contains(".extensions");
+  }
+
 }
