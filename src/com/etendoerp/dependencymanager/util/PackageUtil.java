@@ -175,7 +175,7 @@ public class PackageUtil {
    * @return An integer value representing the comparison result:
    *     0 if the versions are equal, a positive value if version1 is greater, and a negative value if version2 is greater.
    */
-  static int compareVersions(String version1, String version2) {
+  public static int compareVersions(String version1, String version2) {
     String[] parts1 = version1.split("\\.");
     String[] parts2 = version2.split("\\.");
     int length = Math.max(parts1.length, parts2.length);
