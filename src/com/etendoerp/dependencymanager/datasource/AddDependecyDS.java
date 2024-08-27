@@ -192,16 +192,20 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
    */
   private void addCriteria(DependencySelectedFilters selectedFilters, JSONObject criteria) throws JSONException {
     String fieldName = criteria.getString(FIELD_NAME);
-    String value = StringUtils.EMPTY;
-    if (criteria.has(VALUE)) {
-      value = criteria.getString(VALUE);
+
+    if (!criteria.has(VALUE)) {
+      return;
     }
+
+    String value = criteria.getString(VALUE);
 
     if (StringUtils.equals(fieldName, DependencyManagerConstants.GROUP)) {
       selectedFilters.setGroup(value);
+      return;
     }
     if (StringUtils.equals(fieldName, DependencyManagerConstants.ARTIFACT)) {
       selectedFilters.setArtifact(value);
+      return;
     }
     if (StringUtils.equals(fieldName, DependencyManagerConstants.VERSION)) {
       selectedFilters.setVersion(value);
