@@ -16,6 +16,7 @@ import org.openbravo.model.ad.module.Module;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -49,7 +50,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
     try {
       JSONObject jsonContent = new JSONObject(content);
       String depGroup = jsonContent.optString("depGroup");
-      String artifact = jsonContent.optString(PackageUtil.ARTIFACT);
+      String artifact = jsonContent.optString(DependencyManagerConstants.ARTIFACT);
       String updateToVersion = jsonContent.optString("updateToVersion");
       String currentVersion = jsonContent.optString("currentVersion");
 
@@ -180,8 +181,8 @@ public class SelectorChangeVersion extends BaseActionHandler {
 
   private JSONObject buildDependencyInfo(String key, PackageDependency depV1, PackageDependency depV2) throws JSONException {
     JSONObject dependencyInfo = new JSONObject();
-    dependencyInfo.put(PackageUtil.GROUP, key.split(":")[0]);
-    dependencyInfo.put(PackageUtil.ARTIFACT, key.split(":")[1]);
+    dependencyInfo.put(DependencyManagerConstants.GROUP, key.split(":")[0]);
+    dependencyInfo.put(DependencyManagerConstants.ARTIFACT, key.split(":")[1]);
     dependencyInfo.put(PackageUtil.VERSION_V1, depV1 != null ? depV1.getVersion() : "");
     dependencyInfo.put(PackageUtil.VERSION_V2, depV2 != null ? depV2.getVersion() : "");
 

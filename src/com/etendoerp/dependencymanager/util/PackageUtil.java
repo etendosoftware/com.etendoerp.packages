@@ -26,9 +26,6 @@ public class PackageUtil {
   public static final String ETENDO_CORE = "etendo-core";
   public static final String CURRENT_CORE_VERSION = "currentCoreVersion";
   public static final String CORE_VERSION_RANGE = "coreVersionRange";
-  public static final String GROUP = "group";
-  public static final String ARTIFACT = "artifact";
-  public static final String VERSION = "version";
   public static final String STATUS = "status";
   public static final String NEW_DEPENDENCY = "New Dependency";
   public static final String UPDATED = "Updated";
@@ -203,8 +200,8 @@ public class PackageUtil {
   public static synchronized void updateOrCreateDependency(String group, String artifact, String version) {
     Package existingPakage = OBDal.getInstance()
         .createQuery(Package.class, "as pv where pv.group = :group and pv.artifact = :artifact")
-        .setNamedParameter(GROUP, group)
-        .setNamedParameter(ARTIFACT, artifact)
+        .setNamedParameter(DependencyManagerConstants.GROUP, group)
+        .setNamedParameter(DependencyManagerConstants.ARTIFACT, artifact)
         .setMaxResult(1)
         .uniqueResult();
     PackageVersion lastVersion = null;
@@ -215,8 +212,8 @@ public class PackageUtil {
 
     Dependency existingDependency = OBDal.getInstance()
         .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
-        .setNamedParameter(PackageUtil.GROUP, group)
-        .setNamedParameter(PackageUtil.ARTIFACT, artifact)
+        .setNamedParameter(DependencyManagerConstants.GROUP, group)
+        .setNamedParameter(DependencyManagerConstants.ARTIFACT, artifact)
         .setMaxResult(1)
         .uniqueResult();
     if (existingDependency != null) {
@@ -267,7 +264,7 @@ public class PackageUtil {
    */
   public static String findCoreVersions(String packageVersionId) {
     OBCriteria<PackageDependency> criteria = OBDal.getInstance().createCriteria(PackageDependency.class);
-    criteria.add(Restrictions.eq(ARTIFACT, ETENDO_CORE));
+    criteria.add(Restrictions.eq(DependencyManagerConstants.ARTIFACT, ETENDO_CORE));
     criteria.add(Restrictions.eq(PACKAGE_VERSION_ID, packageVersionId));
     PackageDependency dep = (PackageDependency) criteria.setMaxResults(1).uniqueResult();
 

@@ -21,13 +21,11 @@ import org.openbravo.service.json.JsonUtils;
 
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.DependencyTreeBuilder;
 
 public class AddDependecyDS extends ReadOnlyDataSourceService {
 
-  public static final String GROUP = "group";
-  public static final String ARTIFACT = "artifact";
-  public static final String VERSION = "version";
   public static final String CRITERIA = "criteria";
   public static final String CONSTRUCTOR = "_constructor";
   public static final String VALUE = "value";
@@ -95,9 +93,9 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
     List<PackageDependency> dependencyList = DependencyTreeBuilder.createDependencyTree(packageVersion);
     for (PackageDependency dependency : dependencyList) {
       Map<String, Object> map = new HashMap<>();
-      map.put(GROUP, dependency.getGroup());
-      map.put(ARTIFACT, dependency.getArtifact());
-      map.put(VERSION, dependency.getVersion());
+      map.put(DependencyManagerConstants.GROUP, dependency.getGroup());
+      map.put(DependencyManagerConstants.ARTIFACT, dependency.getArtifact());
+      map.put(DependencyManagerConstants.VERSION, dependency.getVersion());
 
       result.add(map);
     }
@@ -121,19 +119,19 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
     //artifact Filter
     if (selectedFilters.getArtifact() != null) {
       result = result.stream().filter(
-          row -> StringUtils.contains(row.get(ARTIFACT).toString(), selectedFilters.getArtifact())).collect(
+          row -> StringUtils.contains(row.get(DependencyManagerConstants.ARTIFACT).toString(), selectedFilters.getArtifact())).collect(
           Collectors.toList());
     }
     //group Filter
     if (selectedFilters.getGroup() != null) {
       result = result.stream().filter(
-          row -> StringUtils.contains(row.get(GROUP).toString(), selectedFilters.getGroup())).collect(
+          row -> StringUtils.contains(row.get(DependencyManagerConstants.GROUP).toString(), selectedFilters.getGroup())).collect(
           Collectors.toList());
     }
     //version filter
     if (selectedFilters.getVersion() != null) {
       result = result.stream().filter(
-          row -> StringUtils.contains(row.get(VERSION).toString(), selectedFilters.getVersion())).collect(
+          row -> StringUtils.contains(row.get(DependencyManagerConstants.VERSION).toString(), selectedFilters.getVersion())).collect(
           Collectors.toList());
     }
     sortResult(parameters, result);
@@ -199,20 +197,20 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
       value = criteria.getString(VALUE);
     }
 
-    if (StringUtils.equals(fieldName, GROUP)) {
+    if (StringUtils.equals(fieldName, DependencyManagerConstants.GROUP)) {
       selectedFilters.setGroup(value);
     }
-    if (StringUtils.equals(fieldName, ARTIFACT)) {
+    if (StringUtils.equals(fieldName, DependencyManagerConstants.ARTIFACT)) {
       selectedFilters.setArtifact(value);
     }
-    if (StringUtils.equals(fieldName, VERSION)) {
+    if (StringUtils.equals(fieldName, DependencyManagerConstants.VERSION)) {
       selectedFilters.setVersion(value);
     }
   }
 
   private static class ResultComparator implements Comparator<Map<String, Object>> {
-    private static final List<String> STRING_FIELD_LIST = List.of(GROUP, ARTIFACT);
-    private static final List<String> STRING_VERSION_FIELD_LIST = List.of(VERSION);
+    private static final List<String> STRING_FIELD_LIST = List.of(DependencyManagerConstants.GROUP, DependencyManagerConstants.ARTIFACT);
+    private static final List<String> STRING_VERSION_FIELD_LIST = List.of(DependencyManagerConstants.VERSION);
     private String sortByField;
     private int ascending;
 
