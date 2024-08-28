@@ -39,6 +39,7 @@ import com.etendoerp.dependencymanager.actions.InstallDependency;
 import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyTreeBuilder;
 import com.etendoerp.dependencymanager.util.DependencyUtil;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 
@@ -72,12 +73,7 @@ public class AddDependency extends BaseActionHandler {
             packageVersion.getVersion());
         log.debug("Adding dependencies for package %s in version %s", packageVersion.getPackage().getIdentifier(),
             packageVersion.getIdentifier());
-        OBCriteria<PackageDependency> packageDependencyCriteria = OBDal.getInstance().createCriteria(
-            PackageDependency.class);
-        packageDependencyCriteria.add(Restrictions.eq(PackageDependency.PROPERTY_PACKAGEVERSION, packageVersion));
-        packageDependencyCriteria.add(Restrictions.ne(PackageDependency.PROPERTY_ARTIFACT, PackageUtil.ETENDO_CORE));
-        List<PackageDependency> dependencyList = packageDependencyCriteria.list();
-
+        List<PackageDependency> dependencyList = DependencyTreeBuilder.createDependencyTree(packageVersion);
         boolean needFlush = false;
         for (PackageDependency packageDependency : dependencyList) {
           boolean isExternalDependency = packageDependency.isExternalDependency().booleanValue();
