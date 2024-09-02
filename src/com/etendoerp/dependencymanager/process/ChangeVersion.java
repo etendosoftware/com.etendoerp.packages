@@ -26,6 +26,7 @@ import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.DependencyUtil;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 
@@ -133,8 +134,8 @@ public class ChangeVersion extends BaseProcessActionHandler {
     PackageDependency depV2 = dependenciesUpdate.get(key);
 
     String[] parts = key.split(":");
-    dependencyInfo.put(PackageUtil.GROUP, parts[0]);
-    dependencyInfo.put(PackageUtil.ARTIFACT, parts[1]);
+    dependencyInfo.put(DependencyManagerConstants.GROUP, parts[0]);
+    dependencyInfo.put(DependencyManagerConstants.ARTIFACT, parts[1]);
     dependencyInfo.put(PackageUtil.VERSION_V1, depV1 != null ? depV1.getVersion() : "");
     dependencyInfo.put(PackageUtil.VERSION_V2, depV2 != null ? depV2.getVersion() : "");
 
@@ -151,8 +152,8 @@ public class ChangeVersion extends BaseProcessActionHandler {
     try {
       for (int i = 0; i < dependenciesComparisonResults.length(); i++) {
         JSONObject dependencyInfo = dependenciesComparisonResults.getJSONObject(i);
-        String group = dependencyInfo.getString(PackageUtil.GROUP);
-        String artifact = dependencyInfo.getString(PackageUtil.ARTIFACT);
+        String group = dependencyInfo.getString(DependencyManagerConstants.GROUP);
+        String artifact = dependencyInfo.getString(DependencyManagerConstants.ARTIFACT);
         String status = dependencyInfo.optString(PackageUtil.STATUS, "");
 
         if (StringUtils.equals(PackageUtil.NEW_DEPENDENCY, status) || StringUtils.equals(PackageUtil.UPDATED, status)) {

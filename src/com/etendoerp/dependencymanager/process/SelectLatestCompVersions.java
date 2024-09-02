@@ -15,6 +15,7 @@ import org.openbravo.dal.service.OBDal;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
 
 import com.etendoerp.dependencymanager.data.Package;
+import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 
 public class SelectLatestCompVersions extends BaseActionHandler {
@@ -49,9 +50,9 @@ public class SelectLatestCompVersions extends BaseActionHandler {
       StringBuilder message = new StringBuilder(msgWithNoUpdates);
 
       for (int i = 0; i < selectedRecords.length(); i++) {
-        String group = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.GROUP);
-        String artifact = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.ARTIFACT);
-        String currentVersion = ((JSONObject) selectedRecords.get(i)).getString(PackageUtil.VERSION);
+        String group = ((JSONObject) selectedRecords.get(i)).getString(DependencyManagerConstants.GROUP);
+        String artifact = ((JSONObject) selectedRecords.get(i)).getString(DependencyManagerConstants.ARTIFACT);
+        String currentVersion = ((JSONObject) selectedRecords.get(i)).getString(DependencyManagerConstants.VERSION);
         String depName = group + "." + artifact;
         depsNames.put(depName);
 
