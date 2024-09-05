@@ -21,10 +21,8 @@ import org.openbravo.scheduling.ProcessLogger;
 import org.openbravo.service.db.DalBaseProcess;
 import org.openbravo.service.db.DataExportService;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.URL;
 import java.util.HashMap;
 
 /**
@@ -69,6 +67,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
         String scriptToRun2 = "git_operations.sh";
         String scriptOutput2 = executeScript(scriptToRun2);
         logger.logln("Script Output for " + scriptToRun2 + ":\n" + scriptOutput2);
+
     }
 
     /**
@@ -77,7 +76,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      * @param bundle The {@link ProcessBundle} containing the context and connection information.
      * @throws Exception if an error occurs during the execution of the process.
      */
-    private void executeGetPackagesProcess(ProcessBundle bundle) throws Exception {
+    protected void executeGetPackagesProcess(ProcessBundle bundle) throws Exception {
         GetPackagesFromRepositories getPackagesProcess = new GetPackagesFromRepositories();
         getPackagesProcess.doExecute(bundle);
     }
@@ -169,7 +168,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      *
      * @return The absolute path of the project.
      */
-    private String getProjectPath() {
+    protected String getProjectPath() {
         String absolute = getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm();
         if (absolute.startsWith("file:")) {
             absolute = absolute.substring(5);
@@ -184,7 +183,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      *
      * @param projectPath The path of the project.
      */
-    private void updateModuleDirsToScan(String projectPath) {
+    protected void updateModuleDirsToScan(String projectPath) {
         ModulesUtil.checkCoreInSources(ModulesUtil.coreInSources(projectPath), projectPath);
     }
 
@@ -195,7 +194,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      * @param moduleJavaPackage The Java package of the module.
      * @return The location of the module within the project.
      */
-    private String getModuleLocation(String projectPath, String moduleJavaPackage) {
+    protected String getModuleLocation(String projectPath, String moduleJavaPackage) {
         String modLocation = File.separator + ModulesUtil.MODULES_BASE + File.separator;
 
         for (String modDir : ModulesUtil.moduleDirs) {
@@ -233,11 +232,15 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
         System.out.println(myFile);
     }
 
-    private String executeScript(String scriptName) {
+    protected String executeScript(String scriptName) {
         StringBuilder output = new StringBuilder();
         try {
             String scriptPath = "com/etendoerp/dependencymanager/util/" + scriptName;
-            File scriptFile = new File(getClass().getClassLoader().getResource(scriptPath).toURI());
+            URL scriptUrl = getClass().getClassLoader().getResource(scriptPath);
+            if (scriptUrl == null) {
+                throw new FileNotFoundException("Script file not found: " + scriptPath);
+            }
+            File scriptFile = new File(scriptUrl.toURI());
             String absoluteScriptPath = scriptFile.getAbsolutePath();
 
             File scriptDir = scriptFile.getParentFile();

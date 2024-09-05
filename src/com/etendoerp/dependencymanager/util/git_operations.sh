@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# shellcheck source=/home/ivan/.gitconfig-env
-
-source /opt/EtendoERP/modules/com.etendoerp.dependencymanager/.env
-
 function pushAndCommit(){
 
     # Get the root directory of the Git repository
@@ -18,8 +14,8 @@ function pushAndCommit(){
     TARGET_DIR="$REPO_DIR/modules/com.etendoerp.dependencymanager/"
     cd "$TARGET_DIR" || { echo "Error: Could not change to directory $TARGET_DIR."; exit 1; }
 
-    # Switch to the 'test' branch and perform a pull
-    git checkout test > /dev/null 2>&1 || { echo "Error: Could not checkout to branch 'test'."; exit 1; }
+    # Switch to the 'main' branch and perform a pull
+    git checkout main > /dev/null 2>&1 || { echo "Error: Could not checkout to branch 'test'."; exit 1; }
     git pull > /dev/null 2>&1 || { echo "Error: Could not perform pull."; exit 1; }
 
     # Check if there are changes in the specified file

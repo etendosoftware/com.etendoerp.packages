@@ -5,28 +5,47 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.openbravo.base.provider.OBProvider;
 import org.openbravo.base.secureApp.VariablesSecureApp;
+import org.openbravo.base.weld.WeldUtils;
 import org.openbravo.base.weld.test.WeldBaseTest;
 import org.openbravo.client.kernel.RequestContext;
 import org.openbravo.dal.core.OBContext;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.database.ConnectionProvider;
+import org.openbravo.ddlutils.util.ModulesUtil;
 import org.openbravo.model.ad.module.Module;
 import org.openbravo.model.ad.utility.DataSet;
 import org.openbravo.erpCommon.utility.OBError;
 import org.openbravo.scheduling.ProcessBundle;
 import org.openbravo.scheduling.ProcessContext;
+import org.openbravo.scheduling.ProcessLogger;
 import org.openbravo.service.db.DalConnectionProvider;
+import org.openbravo.service.db.DataExportService;
 import org.openbravo.test.base.TestConstants;
+import org.openbravo.test.materialMgmt.invoiceFromShipment.TestUtils;
 
 import javax.inject.Inject;
 
-import java.io.File;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for the {@link GetPackagesFromRepositoriesAndCommit} class.
+ * This class contains various test cases to verify the behavior of different methods
+ * in the process of package management and version control operations.
+ */
 public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
 
     @Inject
@@ -36,6 +55,11 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     private static final String AD_MODULE_ID = "2EC4FFAFFE984592BA9859A8C9E25BF0";
     private static final String LANGUAGE = "en_US";
 
+    /**
+     * Sets up the test environment before each test execution. It initializes the Openbravo context and request variables.
+     *
+     * @throws Exception if any setup operation fails.
+     */
     @Override
     @Before
     public void setUp() throws Exception {
@@ -52,28 +76,39 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     }
 
     /**
-     * Test to verify the processButton method when the module is not in development.
-     * Ensures that the method returns an error when the module is not in development.
+     * Test case for verifying the behavior when the module is not in development mode.
+     * Ensures that the process returns an error and handles the rollback correctly.
      */
     @Test
     public void testModuleNotInDevelopment() {
         DalConnectionProvider conn = new DalConnectionProvider(false);
         DataSet mockDataSet = OBProvider.getInstance().get(DataSet.class);
         mockDataSet.setId(AD_DATASET_ID);
+
         Module mockModule = OBProvider.getInstance().get(Module.class);
         mockModule.setId(AD_MODULE_ID);
         mockModule.setInDevelopment(false);
         mockDataSet.setModule(mockModule);
         OBDal.getInstance().save(mockDataSet);
+
         OBError result = process.processButton(LANGUAGE, conn);
+        String projectPath = process.getProjectPath();
+        process.updateModuleDirsToScan(projectPath);
+        String moduleJavaPackage = mockDataSet.getModule().getJavaPackage();
+        String modLocation = process.getModuleLocation(projectPath, moduleJavaPackage);
+
+        assertNotNull(modLocation);
+        assertNotNull(projectPath);
         assertNotNull(result);
         assertEquals("Error", result.getType());
         OBDal.getInstance().rollbackAndClose();
     }
 
     /**
-     * Test to verify the isModuleInDevelopment method.
-     * Ensures that the method correctly identifies whether a module is in development.
+     * Test case for verifying the {@code isModuleInDevelopment} method.
+     * This ensures the method correctly identifies whether a module is in development.
+     *
+     * @throws Exception if reflection-based method invocation fails.
      */
     @Test
     public void testIsModuleInDevelopment() throws Exception {
@@ -93,8 +128,8 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     }
 
     /**
-     * Test to verify that the processButton method throws a RuntimeException when an exception occurs.
-     * Ensures that the method correctly throws a RuntimeException with the expected cause.
+     * Test case to verify that {@code processButton} throws a {@link RuntimeException}
+     * when an exception occurs during its execution.
      */
     @Test(expected = RuntimeException.class)
     public void testProcessButtonThrowsException() {
@@ -107,7 +142,7 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         mockDataSet.setModule(mockModule);
         OBDal.getInstance().save(mockDataSet);
         GetPackagesFromRepositoriesAndCommit processSpy = Mockito.spy(process);
-        Mockito.doThrow(new RuntimeException("Simulated Exception")).when(processSpy).exportDataSetToXML(Mockito.any());
+        Mockito.doThrow(new RuntimeException("Simulated Exception")).when(processSpy).exportDataSetToXML(any());
         try {
             processSpy.processButton(LANGUAGE, conn);
         } catch (RuntimeException e) {
@@ -119,26 +154,35 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     }
 
     /**
-     * Test to verify the doExecute method.
-     * Ensures that the method invokes processButton with the correct parameters.
+     * Test case to verify the {@code doExecute} method.
+     * Ensures that the method invokes the necessary actions for executing the process.
+     *
+     * @throws Exception if any exception occurs during the test execution.
      */
     @Test
     public void testDoExecute() throws Exception {
-        ProcessBundle bundle = Mockito.mock(ProcessBundle.class);
-        ProcessContext context = Mockito.mock(ProcessContext.class);
-        DalConnectionProvider conn = new DalConnectionProvider(false);
-        Mockito.when(bundle.getContext()).thenReturn(context);
-        Mockito.when(bundle.getConnection()).thenReturn(conn);
-        Mockito.when(context.getLanguage()).thenReturn(LANGUAGE);
+        ProcessBundle bundle = mock(ProcessBundle.class);
+        ProcessContext context = mock(ProcessContext.class);
+        ConnectionProvider conn = new DalConnectionProvider(false);
+        ProcessLogger loggerMock = mock(ProcessLogger.class);
+        when(bundle.getLogger()).thenReturn(loggerMock);
+        when(bundle.getContext()).thenReturn(context);
+        when(bundle.getConnection()).thenReturn(conn);
+        when(context.getLanguage()).thenReturn(LANGUAGE);
         GetPackagesFromRepositoriesAndCommit processSpy = Mockito.spy(process);
         Mockito.doReturn(new OBError()).when(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
+        Mockito.doReturn("Script output").when(processSpy).executeScript(Mockito.anyString());
         processSpy.doExecute(bundle);
-        Mockito.verify(processSpy).processButton(LANGUAGE, conn);
+        verify(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
+        verify(processSpy).executeScript("setup.sh");
+        verify(processSpy).executeScript("git_operations.sh");
     }
 
     /**
-     * Test to verify the saveXMLToFile method with a valid XML.
-     * Ensures that the XML is correctly saved to the specified file.
+     * Test case to verify the functionality of {@code saveXMLToFile}.
+     * Ensures that XML content is properly saved to the specified file location.
+     *
+     * @throws Exception if an I/O error occurs during file operations.
      */
     @Test
     public void testSaveXMLToFile() throws Exception {
@@ -161,8 +205,10 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     }
 
     /**
-     * Test to verify the createErrorOBError method.
-     * Ensures that an error OBError object is correctly created with the expected values.
+     * Test case for verifying the {@code createErrorOBError} method.
+     * Ensures that an {@link OBError} with type "Error" is correctly created.
+     *
+     * @throws Exception if reflection-based method invocation fails.
      */
     @Test
     public void testCreateErrorOBError() throws Exception {
@@ -176,8 +222,10 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     }
 
     /**
-     * Test to verify the createSuccessOBError method.
-     * Ensures that a success OBError object is correctly created with the expected values.
+     * Test case for verifying the {@code createSuccessOBError} method.
+     * Ensures that a successful {@link OBError} object is correctly created.
+     *
+     * @throws Exception if reflection-based method invocation fails.
      */
     @Test
     public void testCreateSuccessOBError() throws Exception {
@@ -188,5 +236,78 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         assertEquals("Success", success.getType());
         assertNotNull(success.getTitle());
         assertNotNull(success.getMessage());
+    }
+
+    /**
+     * Test case to verify the correct execution of scripts within the {@code doExecute} method.
+     * Ensures that all the expected scripts are executed successfully.
+     *
+     * @throws Exception if any exception occurs during script execution.
+     */
+    @Test
+    public void testScriptExecution() throws Exception {
+        ProcessBundle bundle = mock(ProcessBundle.class);
+        ProcessContext context = mock(ProcessContext.class);
+        ConnectionProvider conn = new DalConnectionProvider(false);
+        ProcessLogger loggerMock = mock(ProcessLogger.class);
+        when(bundle.getLogger()).thenReturn(loggerMock);
+        when(bundle.getContext()).thenReturn(context);
+        when(bundle.getConnection()).thenReturn(conn);
+        when(context.getLanguage()).thenReturn(LANGUAGE);
+        GetPackagesFromRepositoriesAndCommit processSpy = Mockito.spy(process);
+        Mockito.doReturn(new OBError()).when(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
+        Mockito.doNothing().when(processSpy).executeGetPackagesProcess(any());
+        Mockito.doReturn("Script executed successfully.\n").when(processSpy).executeScript(anyString());
+        processSpy.doExecute(bundle);
+        verify(processSpy).executeScript("setup.sh");
+        verify(processSpy).executeScript("git_operations.sh");
+    }
+
+    /**
+     * Test case for verifying the {@code exportDataSetToXML} method.
+     * Ensures that the dataset is exported to XML format correctly.
+     */
+    @Test
+    public void testExportDataSetToXML() {
+        DataExportService dataExportServiceMock = mock(DataExportService.class);
+        when(dataExportServiceMock.exportDataSetToXML(any(DataSet.class), any(String.class), any(Map.class)))
+                .thenReturn("<xml>Mocked XML content</xml>");
+        DataSet mockDataSet = OBProvider.getInstance().get(DataSet.class);
+        Module mockModule = OBProvider.getInstance().get(Module.class);
+        mockModule.setId(AD_MODULE_ID);
+        mockModule.setInDevelopment(true);
+        mockDataSet.setModule(mockModule);
+        DataExportService originalService = DataExportService.getInstance();
+        try {
+            WeldUtils.getInstanceFromStaticBeanManager(DataExportService.class);
+            DataExportService.setInstance(dataExportServiceMock);
+            process.exportDataSetToXML(mockDataSet);
+        } finally {
+            WeldUtils.getInstanceFromStaticBeanManager(DataExportService.class);
+            DataExportService.setInstance(originalService);
+        }
+    }
+
+    /**
+     * Test case for verifying script execution failure.
+     * Ensures that an appropriate error message is returned when a script fails.
+     */
+    @Test
+    public void testExecuteScriptFailure() {
+        String result = process.executeScript("nonexistentScript.sh");
+        assertNotNull(result);
+        assertTrue(result.contains("An error occurred:"));
+    }
+
+    /**
+     * Test case for verifying successful script execution.
+     * Ensures that a success message is returned when the script is executed without errors.
+     */
+    @Test
+    public void testExecuteScriptSuccess() {
+        String result = process.executeScript("setup.sh");
+        assertNotNull(result);
+        assertFalse(result.contains("An error occurred"));
+        assertTrue(result.contains("Script executed successfully"));
     }
 }
