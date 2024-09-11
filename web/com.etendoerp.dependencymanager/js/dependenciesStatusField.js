@@ -3,6 +3,13 @@ OB.ETDEP = OB.ETDEP || {};
 OB.ETDEP.AddDependency = OB.ETDEP.AddDependency || {};
 
 OB.ETDEP.AddDependency.onLoad = function(view) {
+    var isBundle = view.parentWindow.view.lastRecordSelected.isBundle;
+    if (!isBundle) {
+        view.theForm.getItem("grid").setCanEdit(false);
+    }
+
+    view.theForm.getItem("ETDEP_SubDepenendency").hide();
+
     var packageVersionId = view.buttonOwnerView.lastRecordSelected.id;
     var onLoadCallback = function(response, data, request) {
                     if (data && !data.isCompatible) {
