@@ -414,6 +414,12 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
           String groupId = dependency.elementText("groupId");
           String artifactId = dependency.elementText("artifactId");
           String versionDep = dependency.elementText(PackageUtil.VERSION);
+
+          if ("com.etendoerp.platform".equals(groupId) || "etendo-core".equals(artifactId)) {
+            log.debug("Skipping excluded dependency: groupId={}, artifactId={}", groupId, artifactId);
+            continue;
+          }
+
           findOrCreatePackageDependency(pkgVersion, groupId, artifactId, versionDep);
         }
       }
