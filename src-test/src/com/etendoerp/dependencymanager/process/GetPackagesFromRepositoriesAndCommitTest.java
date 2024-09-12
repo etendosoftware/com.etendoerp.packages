@@ -1,5 +1,6 @@
 package com.etendoerp.dependencymanager.process;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -23,7 +24,8 @@ import org.openbravo.test.base.TestConstants;
 
 import javax.inject.Inject;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 
 import java.nio.charset.StandardCharsets;
@@ -31,6 +33,7 @@ import java.nio.file.Files;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -48,6 +51,14 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     private static final String AD_DATASET_ID = "9F0311EFA2C1406D81B03FE673FF0A17";
     private static final String AD_MODULE_ID = "2EC4FFAFFE984592BA9859A8C9E25BF0";
     private static final String LANGUAGE = "en_US";
+    private static final String SETUP_SCRIPT = "setup.sh";
+    private static final String GIT_OPERATIONS_SCRIPT = "git_operations.sh";
+    private void setupMocks(ProcessBundle bundle, ProcessContext context, ConnectionProvider conn, ProcessLogger loggerMock) {
+        when(bundle.getLogger()).thenReturn(loggerMock);
+        when(bundle.getContext()).thenReturn(context);
+        when(bundle.getConnection()).thenReturn(conn);
+        when(context.getLanguage()).thenReturn(LANGUAGE);
+    }
 
     /**
      * Sets up the test environment before each test execution. It initializes the Openbravo context and request variables.
@@ -160,17 +171,16 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         ProcessContext context = mock(ProcessContext.class);
         ConnectionProvider conn = new DalConnectionProvider(false);
         ProcessLogger loggerMock = mock(ProcessLogger.class);
-        when(bundle.getLogger()).thenReturn(loggerMock);
-        when(bundle.getContext()).thenReturn(context);
-        when(bundle.getConnection()).thenReturn(conn);
-        when(context.getLanguage()).thenReturn(LANGUAGE);
+
+        setupMocks(bundle, context, conn, loggerMock);
         GetPackagesFromRepositoriesAndCommit processSpy = Mockito.spy(process);
+
         Mockito.doReturn(new OBError()).when(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
         Mockito.doReturn("Script output").when(processSpy).executeScript(Mockito.anyString());
         processSpy.doExecute(bundle);
         verify(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
-        verify(processSpy).executeScript("setup.sh");
-        verify(processSpy).executeScript("git_operations.sh");
+        verify(processSpy).executeScript(SETUP_SCRIPT);
+        verify(processSpy).executeScript(GIT_OPERATIONS_SCRIPT);
     }
 
     /**
@@ -189,8 +199,11 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         File myFile = new File(myFolder.getPath() + "/Packages_dataset.xml");
 
         if (myFile.exists()) {
-            boolean deleted = myFile.delete();
-            assertTrue("Failed to delete existing file before test", deleted);
+            try {
+                Files.delete(myFile.toPath());  // Usamos Files.delete para mejor manejo de errores
+            } catch (IOException e) {
+                fail("Failed to delete existing file before test: " + e.getMessage());
+            }
         }
 
         process.saveXMLToFile(xmlContent, projectPath, modLocation, moduleJavaPackage);
@@ -200,8 +213,11 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         assertEquals(xmlContent, fileContent);
 
         if (myFile.exists()) {
-            boolean deleted = myFile.delete();
-            assertTrue("Failed to delete file after test", deleted);
+            try {
+                Files.delete(myFile.toPath());  // Usamos Files.delete también aquí
+            } catch (IOException e) {
+                fail("Failed to delete file after test: " + e.getMessage());
+            }
         }
     }
 
@@ -216,7 +232,6 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     public void testCreateErrorOBError() throws Exception {
         DalConnectionProvider conn = new DalConnectionProvider(false);
         Method method = GetPackagesFromRepositoriesAndCommit.class.getDeclaredMethod("createErrorOBError", ConnectionProvider.class, String.class);
-        method.setAccessible(true);
         OBError error = (OBError) method.invoke(process, conn, LANGUAGE);
         assertEquals("Error", error.getType());
         assertNotNull(error.getTitle());
@@ -233,7 +248,6 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     public void testCreateSuccessOBError() throws Exception {
         DalConnectionProvider conn = new DalConnectionProvider(false);
         Method method = GetPackagesFromRepositoriesAndCommit.class.getDeclaredMethod("createSuccessOBError", ConnectionProvider.class, String.class);
-        method.setAccessible(true);
         OBError success = (OBError) method.invoke(process, conn, LANGUAGE);
         assertEquals("Success", success.getType());
         assertNotNull(success.getTitle());
@@ -252,17 +266,16 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         ProcessContext context = mock(ProcessContext.class);
         ConnectionProvider conn = new DalConnectionProvider(false);
         ProcessLogger loggerMock = mock(ProcessLogger.class);
-        when(bundle.getLogger()).thenReturn(loggerMock);
-        when(bundle.getContext()).thenReturn(context);
-        when(bundle.getConnection()).thenReturn(conn);
-        when(context.getLanguage()).thenReturn(LANGUAGE);
+
+        setupMocks(bundle, context, conn, loggerMock);
         GetPackagesFromRepositoriesAndCommit processSpy = Mockito.spy(process);
+
         Mockito.doReturn(new OBError()).when(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
         Mockito.doNothing().when(processSpy).executeGetPackagesProcess(any());
         Mockito.doReturn("Script executed successfully.\n").when(processSpy).executeScript(anyString());
         processSpy.doExecute(bundle);
-        verify(processSpy).executeScript("setup.sh");
-        verify(processSpy).executeScript("git_operations.sh");
+        verify(processSpy).executeScript(SETUP_SCRIPT);
+        verify(processSpy).executeScript(GIT_OPERATIONS_SCRIPT);
     }
 
     /**
@@ -296,9 +309,10 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
      */
     @Test
     public void testExecuteScriptFailure() {
-        String result = process.executeScript("nonexistentScript.sh");
-        assertNotNull(result);
-        assertTrue(result.contains("An error occurred:"));
+        Exception exception = assertThrows(IllegalStateException.class, () -> {
+            process.executeScript("nonexistentScript.sh");
+        });
+        assertTrue(StringUtils.contains(exception.getMessage(), "Script execution failed"));
     }
 
     /**
@@ -307,9 +321,9 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
      */
     @Test
     public void testExecuteScriptSuccess() {
-        String result = process.executeScript("setup.sh");
+        String result = process.executeScript(SETUP_SCRIPT);
         assertNotNull(result);
-        assertFalse(result.contains("An error occurred"));
-        assertTrue(result.contains("Script executed successfully"));
+        assertFalse(StringUtils.contains(result, "An error occurred:"));
+        assertTrue(StringUtils.contains(result, "Script executed successfully"));
     }
 }

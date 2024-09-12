@@ -6,6 +6,7 @@
  */
 package com.etendoerp.dependencymanager.process;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openbravo.dal.service.OBDal;
@@ -21,7 +22,14 @@ import org.openbravo.scheduling.ProcessLogger;
 import org.openbravo.service.db.DalBaseProcess;
 import org.openbravo.service.db.DataExportService;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileOutputStream;
+
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 
@@ -35,11 +43,8 @@ import java.util.HashMap;
 public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
     private static final Logger log4j = LogManager.getLogger();
     private ProcessLogger logger;
-
-    /** The ID of the dataset to be processed. */
+    private static final String SUCCESS = "Success";
     public static final String AD_DATASET_ID = "9F0311EFA2C1406D81B03FE673FF0A17";
-
-    /** The ID of the module associated with the dataset. */
     public static final String AD_MODULE_ID = "2EC4FFAFFE984592BA9859A8C9E25BF0";
 
     /**
@@ -53,7 +58,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
         logger = bundle.getLogger();
 
         executeGetPackagesProcess(bundle);
-        logger.logln("Get Packages Process: " + OBMessageUtils.messageBD("Success"));
+        logger.logln("Get Packages Process: " + OBMessageUtils.messageBD(SUCCESS));
 
         String scriptToRun1 = "setup.sh";
         String scriptOutput1 = executeScript(scriptToRun1);
@@ -62,7 +67,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
         ProcessContext context = bundle.getContext();
         String language = context.getLanguage();
         processButton(language, bundle.getConnection());
-        logger.logln("Export Reference Data: " + OBMessageUtils.messageBD("Success"));
+        logger.logln("Export Reference Data: " + OBMessageUtils.messageBD(SUCCESS));
 
         String scriptToRun2 = "git_operations.sh";
         String scriptOutput2 = executeScript(scriptToRun2);
@@ -129,7 +134,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      * @param language The language to be used for messages.
      * @return An {@link OBError} object representing an error state.
      */
-    private OBError createErrorOBError(ConnectionProvider conn, String language) {
+    protected OBError createErrorOBError(ConnectionProvider conn, String language) {
         OBError myError = new OBError();
         myError.setType("Error");
         myError.setTitle(Utility.messageBD(conn, "Error", language));
@@ -144,11 +149,11 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      * @param language The language to be used for messages.
      * @return An {@link OBError} object representing a success state.
      */
-    private OBError createSuccessOBError(ConnectionProvider conn, String language) {
+    protected OBError createSuccessOBError(ConnectionProvider conn, String language) {
         OBError myError = new OBError();
-        myError.setType("Success");
-        myError.setTitle(Utility.messageBD(conn, "Success", language));
-        myError.setMessage(Utility.messageBD(conn, "Success", language));
+        myError.setType(SUCCESS);
+        myError.setTitle(Utility.messageBD(conn, SUCCESS, language));
+        myError.setMessage(Utility.messageBD(conn, SUCCESS, language));
         return myError;
     }
 
@@ -170,8 +175,8 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      */
     protected String getProjectPath() {
         String absolute = getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm();
-        if (absolute.startsWith("file:")) {
-            absolute = absolute.substring(5);
+        if (StringUtils.startsWith(absolute, "file:")) {
+            absolute = StringUtils.substring(absolute, 5);
         }
         File classesDir = new File(absolute);
         File projectDir = classesDir.getParentFile().getParentFile();
@@ -218,7 +223,7 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      * @throws Exception if an error occurs while saving the file.
      */
     protected void saveXMLToFile(String xml, String projectPath, String modLocation, String moduleJavaPackage) throws Exception {
-        File myFolder = new File(projectPath + (AD_MODULE_ID.equals("0") ? "" : modLocation + moduleJavaPackage) + "/referencedata/standard");
+        File myFolder = new File(projectPath + (StringUtils.equals(AD_MODULE_ID, "0") ? "" : modLocation + moduleJavaPackage) + "/referencedata/standard");
         File myFile = new File(myFolder.getPath() + "/Packages_dataset" + ".xml");
 
         if (!myFolder.exists()) {
@@ -229,9 +234,23 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
             myOutputStream.write(xml.getBytes("UTF-8"));
         }
 
-        System.out.println(myFile);
+        log4j.info("Saved XML file to: " + myFile.getAbsolutePath());
     }
 
+    /**
+     * Executes a Bash script located in the project's resources directory.
+     *
+     * This method locates the specified script in the project's resources directory,
+     * executes it using a system process, and captures the script's output. The output
+     * of the script is appended to a {@link StringBuilder} and returned as a string.
+     *
+     * @param scriptName The name of the script file to execute. It should be located
+     *        in the resources directory under the path
+     *        <code>com/etendoerp/dependencymanager/util/</code>.
+     * @return A string containing the script's output and a message indicating whether
+     *         the execution was successful or if any errors occurred.
+     * @throws RuntimeException If an error occurs while converting the script URL to a URI.
+     */
     protected String executeScript(String scriptName) {
         StringBuilder output = new StringBuilder();
         try {
@@ -265,11 +284,13 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
                 output.append("An error occurred during script execution. Exit code: ").append(exitCode).append("\n");
             }
 
-        } catch (InterruptedIOException e) {
+        } catch (IOException e) {
+            throw new IllegalStateException("Script execution failed: " + e.getMessage(), e);
+        } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            output.append("Script execution was interrupted: ").append(e.getMessage()).append("\n");
-        } catch (Exception e) {
-            output.append("An error occurred: ").append(e.getMessage()).append("\n");
+            throw new IllegalStateException("Script execution interrupted: " + e.getMessage(), e);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Script URI syntax error: " + e.getMessage(), e);
         }
 
         return output.toString();
