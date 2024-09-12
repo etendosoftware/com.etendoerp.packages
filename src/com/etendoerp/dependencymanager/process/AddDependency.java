@@ -149,13 +149,18 @@ public class AddDependency extends BaseActionHandler {
     if (!isBundle) {
       return DependencyTreeBuilder.createDependencyTree(packageVersion);
     }
+    if (!packageVersion.getPackage().isBundle()) {
+      return DependencyTreeBuilder.createDependencyTree(packageVersion);
+    }
 
     JSONObject grid = jsonContent.optJSONObject("_params").optJSONObject("grid");
+    if (grid == null) {
+      throw new JSONException("Missing 'grid' key in '_params'");
+    }
 
-    JSONArray paramsSelect = (grid != null) ? grid.optJSONArray("_selection") : null;
-
+    JSONArray paramsSelect = grid.optJSONArray("_selection");
     if (paramsSelect == null) {
-      throw new JSONException("Missing '_selection' key in 'grid' or 'grid' key in '_params'");
+      throw new JSONException("Missing '_selection' key in 'grid'");
     }
 
     if (paramsSelect.length() == 0) {

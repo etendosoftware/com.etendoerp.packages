@@ -255,6 +255,10 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
         returnValue = getVersionCompare(map1, map2);
       } else if (STRING_FIELD_LIST.contains(sortByField)) {
         returnValue = getStringCompare(map1, map2);
+      } else {
+        var val1 = map1.get(sortByField) != null ? map1.get(sortByField).toString() : StringUtils.EMPTY;
+        var val2 = map2.get(sortByField) != null ? map2.get(sortByField).toString() : StringUtils.EMPTY;
+        returnValue = val1.compareTo(val2);
       }
 
       return returnValue * ascending;

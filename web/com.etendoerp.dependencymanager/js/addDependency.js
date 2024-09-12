@@ -1,12 +1,12 @@
 OB.ETDEP = OB.ETDEP || {};
 OB.ETDEP.AddDependencys = OB.ETDEP.AddDependencys || {};
 
-OB.ETDEP.AddDependencys.onRefreshDep = function(item,view, form, grid){
-    var subDependencyField = item.parentElement.parentElement.getField("ETDEP_SubDepenendency");
+OB.ETDEP.AddDependencys.onRefreshDep = function(item,view){
+    var subDependencyField = item.parentElement.parentElement.getField("ETDEP_SubDependency");
     var visible = subDependencyField.visible;
 
     if(!visible){
-        item.parentElement.parentElement.getField("ETDEP_SubDepenendency").show();
+        item.parentElement.parentElement.getField("ETDEP_SubDependency").show();
     }
     var dependencies = [];
 
@@ -19,9 +19,9 @@ OB.ETDEP.AddDependencys.onRefreshDep = function(item,view, form, grid){
     var dependenciesIdSelect = [];
     var hasSelection = false;
 
-    for (var i = 0; i < dependencies.length; i++) {
-        if (dependencies[i].obSelected) {
-            dependenciesIdSelect.add(dependencies[i].id);
+    for (let dependency of dependencies) {
+        if (dependency.obSelected) {
+            dependenciesIdSelect.push(dependency.id);
             hasSelection = true;
         }
     }
@@ -30,7 +30,7 @@ OB.ETDEP.AddDependencys.onRefreshDep = function(item,view, form, grid){
         subDependencyField.hide();
     }
 
-    var grid = item.parentElement.parentElement.getField("ETDEP_SubDepenendency").selectionLayout.viewGrid.data;
+    var grid = item.parentElement.parentElement.getField("ETDEP_SubDependency").selectionLayout.viewGrid.data;
 
     OB.RemoteCallManager.call("com.etendoerp.dependencymanager.process.AddSubDependency", {
                         dependencyId: dependenciesIdSelect }, {}, res => {let defaultCriteria = res.data.filter;

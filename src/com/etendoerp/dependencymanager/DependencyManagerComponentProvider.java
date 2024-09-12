@@ -19,7 +19,7 @@ public class DependencyManagerComponentProvider extends BaseComponentProvider {
       "changeVersionDropdown.js",
       "changeFormat.js",
       "dependenciesStatusField.js",
-      "addDependencys.js"
+      "addDependency.js"
   };
   protected static final String ETDEP_COMPONENT = "ETDEP_DependencyManagerComponentProvider";
 

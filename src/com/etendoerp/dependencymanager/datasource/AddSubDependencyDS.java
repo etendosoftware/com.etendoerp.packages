@@ -25,7 +25,7 @@ import com.etendoerp.dependencymanager.data.PackageVersion;
 import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.DependencyTreeBuilder;
 
-public class AddSubDependency extends ReadOnlyDataSourceService {
+public class AddSubDependencyDS extends ReadOnlyDataSourceService {
 
   /**
    * Returns the count of the data based on the provided parameters.
@@ -279,6 +279,10 @@ public class AddSubDependency extends ReadOnlyDataSourceService {
         returnValue = getVersionCompare(map1, map2);
       } else if (STRING_FIELD_LIST.contains(sortByField)) {
         returnValue = getStringCompare(map1, map2);
+      } else {
+        var val1 = map1.get(sortByField) != null ? map1.get(sortByField).toString() : StringUtils.EMPTY;
+        var val2 = map2.get(sortByField) != null ? map2.get(sortByField).toString() : StringUtils.EMPTY;
+        returnValue = val1.compareTo(val2);
       }
 
       return returnValue * ascending;

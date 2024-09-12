@@ -100,13 +100,7 @@ public class AddSubDependency extends BaseActionHandler {
    */
   private static JSONObject getOneCriteria(List<PackageDependency> dependencyList) throws JSONException {
     String value = dependencyList.get(0).getId();
-
-    JSONObject criteriaItem = new JSONObject();
-    criteriaItem.put(DependencyManagerConstants.FIELD_NAME, DependencyManagerConstants.PARENT);
-    criteriaItem.put(OPERATOR, I_EQUALS);
-    criteriaItem.put(DependencyManagerConstants.VALUE, value);
-    criteriaItem.put(DependencyManagerConstants.CONSTRUCTOR, ADVANCED_CRITERIA);
-    return criteriaItem;
+    return createCriteriaItem(value);
   }
 
   /**
@@ -121,12 +115,7 @@ public class AddSubDependency extends BaseActionHandler {
 
     for (PackageDependency dependency : dependencyList) {
       String value = dependency.getId();
-
-      JSONObject criteriaItem = new JSONObject();
-      criteriaItem.put(DependencyManagerConstants.FIELD_NAME, DependencyManagerConstants.PARENT);
-      criteriaItem.put(OPERATOR, I_EQUALS);
-      criteriaItem.put(DependencyManagerConstants.VALUE, value);
-
+      JSONObject criteriaItem = createCriteriaItem(value);
       orCriteriaArray.put(criteriaItem);
     }
 
@@ -135,5 +124,21 @@ public class AddSubDependency extends BaseActionHandler {
     orCriteria.put(DependencyManagerConstants.CRITERIA, orCriteriaArray);
     orCriteria.put(DependencyManagerConstants.CONSTRUCTOR, ADVANCED_CRITERIA);
     return orCriteria;
+  }
+
+  /**
+   * Creates a single criteria item for a given dependency value.
+   *
+   * @param value The value of the dependency to be used in the criteria.
+   * @return A JSONObject representing the criteria for the given dependency.
+   * @throws JSONException If an error occurs during the JSON processing.
+   */
+  private static JSONObject createCriteriaItem(String value) throws JSONException {
+    JSONObject criteriaItem = new JSONObject();
+    criteriaItem.put(DependencyManagerConstants.FIELD_NAME, DependencyManagerConstants.PARENT);
+    criteriaItem.put(OPERATOR, I_EQUALS);
+    criteriaItem.put(DependencyManagerConstants.VALUE, value);
+    criteriaItem.put(DependencyManagerConstants.CONSTRUCTOR, ADVANCED_CRITERIA);
+    return criteriaItem;
   }
 }

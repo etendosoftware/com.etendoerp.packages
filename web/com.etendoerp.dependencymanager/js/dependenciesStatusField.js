@@ -8,7 +8,7 @@ OB.ETDEP.AddDependency.onLoad = function(view) {
         view.theForm.getItem("grid").setCanEdit(false);
     }
 
-    view.theForm.getItem("ETDEP_SubDepenendency").hide();
+    view.theForm.getItem("ETDEP_SubDependency").hide();
 
     var packageVersionId = view.buttonOwnerView.lastRecordSelected.id;
     var onLoadCallback = function(response, data, request) {
