@@ -147,7 +147,7 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
    */
   private void sortResult(Map<String, String> parameters, List<Map<String, Object>> result) {
     String strSortBy = parameters.getOrDefault(DependencyManagerConstants.SORT_BY, DependencyManagerConstants.LINE);
-    Collections.sort(result, new ResultComparator(strSortBy));
+    Collections.sort(result, new DependencyResultComparator(strSortBy));
   }
 
   /**
@@ -213,158 +213,27 @@ public class AddDependecyDS extends ReadOnlyDataSourceService {
     }
   }
 
-  private static class ResultComparator implements Comparator<Map<String, Object>> {
-    private static final List<String> STRING_FIELD_LIST = List.of(DependencyManagerConstants.GROUP,
-        DependencyManagerConstants.ARTIFACT);
-    private static final List<String> STRING_VERSION_FIELD_LIST = List.of(DependencyManagerConstants.VERSION);
-    private String sortByField;
-    private int ascending;
+  private static class DependencyResultComparator extends AbstractResultComparator {
 
     /**
-     * Constructs a `ResultComparator` with the specified field for sorting.
+     * Constructs an instance of {@code DependencyResultComparator} with the specified field to sort by.
+     * This constructor initializes the comparator to use the sorting field provided.
      *
-     * @param sortByField
-     *     The field by which the data should be sorted. If the field name starts with a "-",
-     *     sorting will be in descending order; otherwise, it will be in ascending order.
+     * @param sortByField the field name to sort by
      */
-    public ResultComparator(String sortByField) {
-      this.sortByField = sortByField;
-      ascending = 1;
-      if (StringUtils.startsWith(sortByField, "-")) {
-        ascending = -1;
-        this.sortByField = StringUtils.substring(sortByField, 1);
-      }
+    public DependencyResultComparator(String sortByField) {
+      super(sortByField);
     }
-
-    /**
-     * Compares two maps based on the field specified in the `sortByField` property.
-     * The comparison is done according to the field type: version or string.
-     * The sorting order is determined by the `ascending` property.
-     *
-     * @param map1
-     *     The first map to be compared.
-     * @param map2
-     *     The second map to be compared.
-     * @return A negative integer, zero, or a positive integer as the first map is less than, equal to, or greater
-     *     than the second map, respectively. The result is adjusted according to the `ascending` property.
-     */
-    @Override
-    public int compare(Map<String, Object> map1, Map<String, Object> map2) {
-      int returnValue = 0;
-      if (STRING_VERSION_FIELD_LIST.contains(sortByField)) {
-        returnValue = getVersionCompare(map1, map2);
-      } else if (STRING_FIELD_LIST.contains(sortByField)) {
-        returnValue = getStringCompare(map1, map2);
-      } else {
-        var val1 = map1.get(sortByField) != null ? map1.get(sortByField).toString() : StringUtils.EMPTY;
-        var val2 = map2.get(sortByField) != null ? map2.get(sortByField).toString() : StringUtils.EMPTY;
-        returnValue = val1.compareTo(val2);
-      }
-
-      return returnValue * ascending;
-    }
-
-    /**
-     * Compares version values from two maps based on the field specified in `sortByField`.
-     *
-     * @param map1
-     *     The first map containing the version value.
-     * @param map2
-     *     The second map containing the version value.
-     * @return A negative integer, zero, or a positive integer if the version in `map1` is less than, equal to,
-     *     or greater than the version in `map2`, respectively.
-     */
-    private int getVersionCompare(Map<String, Object> map1, Map<String, Object> map2) {
-      var val1 = map1.get(sortByField) != null ? map1.get(sortByField).toString() : StringUtils.EMPTY;
-      var val2 = map2.get(sortByField) != null ? map2.get(sortByField).toString() : StringUtils.EMPTY;
-      return compareVersions(val1, val2);
-    }
-
-    /**
-     * Compares string values from two maps based on the field specified in `sortByField`.
-     *
-     * @param map1
-     *     The first map containing the string value.
-     * @param map2
-     *     The second map containing the string value.
-     * @return A negative integer, zero, or a positive integer if the string in `map1` is less than, equal to,
-     *     or greater than the string in `map2`, respectively.
-     */
-    private int getStringCompare(Map<String, Object> map1, Map<String, Object> map2) {
-      var val1 = map1.get(sortByField) != null ? map1.get(sortByField).toString() : StringUtils.EMPTY;
-      var val2 = map2.get(sortByField) != null ? map2.get(sortByField).toString() : StringUtils.EMPTY;
-      return val1.compareTo(val2);
-    }
-
   }
 
-  private static class DependencySelectedFilters {
-
-    private String group;
-    private String artifact;
-    private String version;
-
-    DependencySelectedFilters() {
-      group = null;
-      artifact = null;
-      version = null;
-    }
+  private static class DependencySelectedFilters extends AbstractSelectedFilters {
 
     /**
-     * Returns the group filter value.
-     *
-     * @return The group filter value, or null if not set.
+     * Constructs an instance of {@code DependencySelectedFilters} with the default filter settings.
+     * This constructor calls the superclass constructor to initialize the filters.
      */
-    public String getGroup() {
-      return group;
-    }
-
-    /**
-     * Sets the group filter value.
-     *
-     * @param group
-     *     The group filter value to set.
-     */
-    public void setGroup(String group) {
-      this.group = group;
-    }
-
-    /**
-     * Returns the artifact filter value.
-     *
-     * @return The artifact filter value, or null if not set.
-     */
-    public String getArtifact() {
-      return artifact;
-    }
-
-    /**
-     * Sets the artifact filter value.
-     *
-     * @param artifact
-     *     The artifact filter value to set.
-     */
-    public void setArtifact(String artifact) {
-      this.artifact = artifact;
-    }
-
-    /**
-     * Returns the version filter value.
-     *
-     * @return The version filter value, or null if not set.
-     */
-    public String getVersion() {
-      return version;
-    }
-
-    /**
-     * Sets the version filter value.
-     *
-     * @param version
-     *     The version filter value to set.
-     */
-    public void setVersion(String version) {
-      this.version = version;
+    public DependencySelectedFilters() {
+      super();
     }
   }
 
