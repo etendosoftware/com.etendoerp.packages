@@ -19,6 +19,7 @@
 
 package com.etendoerp.dependencymanager.process;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,10 +29,8 @@ import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.hibernate.criterion.Restrictions;
 import org.openbravo.client.kernel.BaseActionHandler;
 import org.openbravo.dal.core.OBContext;
-import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.erpCommon.utility.OBMessageUtils;
 
@@ -39,6 +38,7 @@ import com.etendoerp.dependencymanager.actions.InstallDependency;
 import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyTreeBuilder;
 import com.etendoerp.dependencymanager.util.DependencyUtil;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 
@@ -72,12 +72,7 @@ public class AddDependency extends BaseActionHandler {
             packageVersion.getVersion());
         log.debug("Adding dependencies for package %s in version %s", packageVersion.getPackage().getIdentifier(),
             packageVersion.getIdentifier());
-        OBCriteria<PackageDependency> packageDependencyCriteria = OBDal.getInstance().createCriteria(
-            PackageDependency.class);
-        packageDependencyCriteria.add(Restrictions.eq(PackageDependency.PROPERTY_PACKAGEVERSION, packageVersion));
-        packageDependencyCriteria.add(Restrictions.ne(PackageDependency.PROPERTY_ARTIFACT, PackageUtil.ETENDO_CORE));
-        List<PackageDependency> dependencyList = packageDependencyCriteria.list();
-
+        List<PackageDependency> dependencyList = getPackageDependencies(packageVersion, jsonContent);
         boolean needFlush = false;
         for (PackageDependency packageDependency : dependencyList) {
           boolean isExternalDependency = packageDependency.isExternalDependency().booleanValue();
@@ -135,6 +130,44 @@ public class AddDependency extends BaseActionHandler {
       OBContext.restorePreviousMode();
     }
     return result;
+  }
+
+  /**
+   * Gets the dependencies of the specified package.
+   *
+   * <p>If the package is not a bundle, a dependency tree is created. If it is a bundle,
+   * the dependencies are taken from the provided JSON, specifically from "_params" and "grid".</p>
+   *
+   * @param packageVersion The version of the package to get dependencies for.
+   * @param jsonContent The JSON with the details to build dependencies, used when the package is a bundle.
+   * @return A list of dependencies for the package.
+   * @throws JSONException If the JSON does not have the necessary keys when the package is a bundle.
+   */
+  private static List<PackageDependency> getPackageDependencies(PackageVersion packageVersion,
+      JSONObject jsonContent) throws JSONException {
+    boolean isBundle = packageVersion.getPackage().isBundle();
+    if (!isBundle) {
+      return DependencyTreeBuilder.createDependencyTree(packageVersion);
+    }
+    if (!packageVersion.getPackage().isBundle()) {
+      return DependencyTreeBuilder.createDependencyTree(packageVersion);
+    }
+
+    JSONObject grid = jsonContent.optJSONObject("_params").optJSONObject("grid");
+    if (grid == null) {
+      throw new JSONException("Missing 'grid' key in '_params'");
+    }
+
+    JSONArray paramsSelect = grid.optJSONArray("_selection");
+    if (paramsSelect == null) {
+      throw new JSONException("Missing '_selection' key in 'grid'");
+    }
+
+    if (paramsSelect.length() == 0) {
+      return new ArrayList<>();
+    }
+
+    return DependencyTreeBuilder.addDependenciesFromParams(paramsSelect);
   }
 
   private JSONArray createSuccessActions(String successMessage, String successType) throws JSONException {
@@ -210,17 +243,10 @@ public class AddDependency extends BaseActionHandler {
       dependency.setGroup(packageVersion.getPackage().getGroup());
       dependency.setArtifact(packageVersion.getPackage().getArtifact());
       dependency.setInstallationStatus(DependencyUtil.STATUS_PENDING);
-      String versionStatus;
-      if (dependencyList.isEmpty()) {
-        dependency.setFormat(DependencyUtil.FORMAT_JAR);
-        dependency.setExternalDependency(true);
-        versionStatus = DependencyUtil.UNTRACKED_STATUS;
-      } else {
-        dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
-        PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
-        versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(),
-            latestPackageVersion.getVersion());
-      }
+      dependency.setFormat(DependencyUtil.FORMAT_SOURCE);
+      PackageVersion latestPackageVersion = PackageUtil.getLastPackageVersion(packageVersion.getPackage());
+      String versionStatus = InstallDependency.determineVersionStatus(packageVersion.getVersion(),
+          latestPackageVersion.getVersion());
       dependency.setVersionStatus(versionStatus);
       OBDal.getInstance().save(dependency);
       needFlush = true;
