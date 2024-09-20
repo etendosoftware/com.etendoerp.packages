@@ -3,6 +3,7 @@ package com.etendoerp.dependencymanager.util;
 import org.hibernate.criterion.Restrictions;
 import org.openbravo.dal.service.OBCriteria;
 import org.openbravo.dal.service.OBDal;
+import org.openbravo.model.ad.module.Module;
 
 import com.etendoerp.dependencymanager.data.Dependency;
 
@@ -38,5 +39,41 @@ public class DependencyUtil {
     dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_VERSION, version));
     dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_FORMAT, externalDependency ? DependencyUtil.FORMAT_JAR : DependencyUtil.FORMAT_SOURCE));
     return dependencyCriteria.setMaxResults(1).uniqueResult() != null;
+  }
+
+  /**
+   * Retrieves the installed dependency based on the specified group, artifact, and external dependency flag.
+   *
+   * This method queries the database for a `Dependency` object that matches the given group, artifact,
+   * and whether it is an external dependency. It returns the first matching dependency found.
+   *
+   * @param group The group identifier of the dependency to be retrieved.
+   * @param artifact The artifact identifier of the dependency to be retrieved.
+   * @param externalDependency A boolean flag indicating whether the dependency is external.
+   * @return The installed `Dependency` object that matches the criteria, or null if no match is found.
+   */
+  public static Dependency getInstalledDependency(String group, String artifact, boolean externalDependency) {
+    OBCriteria<Dependency> dependencyCriteria = OBDal.getInstance().createCriteria(Dependency.class);
+    dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_GROUP, group));
+    dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_ARTIFACT, artifact));
+    dependencyCriteria.add(Restrictions.eq(Dependency.PROPERTY_EXTERNALDEPENDENCY, externalDependency));
+    return (Dependency) dependencyCriteria.setMaxResults(1).uniqueResult();
+  }
+
+  /**
+   * Retrieves the installed module based on the specified group, artifact, and version.
+   *
+   * This method queries the database for a `Module` object that matches the provided group and artifact,
+   * concatenated into a Java package format. It returns the first matching module found.
+   *
+   * @param group The group identifier of the module to be retrieved.
+   * @param artifact The artifact identifier of the module to be retrieved.
+   * @param version The version of the module (though not used in this method).
+   * @return The installed `Module` object that matches the criteria, or null if no match is found.
+   */
+  public static Module getInstalledModule(String group, String artifact, String version) {
+    OBCriteria<Module> moduleOBCriteria = OBDal.getInstance().createCriteria(Module.class);
+    moduleOBCriteria.add(Restrictions.eq(Module.PROPERTY_JAVAPACKAGE, group+"."+artifact));
+    return (Module) moduleOBCriteria.setMaxResults(1).uniqueResult();
   }
 }
