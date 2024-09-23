@@ -149,9 +149,6 @@ public class AddDependency extends BaseActionHandler {
     if (!isBundle) {
       return DependencyTreeBuilder.createDependencyTree(packageVersion);
     }
-    if (!packageVersion.getPackage().isBundle()) {
-      return DependencyTreeBuilder.createDependencyTree(packageVersion);
-    }
 
     JSONObject grid = jsonContent.optJSONObject("_params").optJSONObject("grid");
     if (grid == null) {
