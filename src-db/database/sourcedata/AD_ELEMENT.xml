@@ -241,7 +241,7 @@ This process only deletes the selected module, not its dependencies.]]></PO_HELP
 <!--51226EA8A1C34A0F943AACD07A3510EC-->  <NAME><![CDATA[Artifact]]></NAME>
 <!--51226EA8A1C34A0F943AACD07A3510EC-->  <PRINTNAME><![CDATA[Artifact]]></PRINTNAME>
 <!--51226EA8A1C34A0F943AACD07A3510EC-->  <DESCRIPTION><![CDATA[Specify the artifact of the module.]]></DESCRIPTION>
-<!--51226EA8A1C34A0F943AACD07A3510EC-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package]]></HELP>
+<!--51226EA8A1C34A0F943AACD07A3510EC-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package.]]></HELP>
 <!--51226EA8A1C34A0F943AACD07A3510EC-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--51226EA8A1C34A0F943AACD07A3510EC-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
 <!--51226EA8A1C34A0F943AACD07A3510EC--></AD_ELEMENT>
@@ -296,7 +296,7 @@ This process only deletes the selected module, not its dependencies.]]></PO_HELP
 <!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <COLUMNNAME><![CDATA[Latest_Core]]></COLUMNNAME>
 <!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <NAME><![CDATA[Latest Core]]></NAME>
 <!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <PRINTNAME><![CDATA[Latest Core]]></PRINTNAME>
-<!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <DESCRIPTION><![CDATA[Latest version of the core dependency supported]]></DESCRIPTION>
+<!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <DESCRIPTION><![CDATA[Latest version of the core dependency supported.]]></DESCRIPTION>
 <!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <HELP><![CDATA[The column stores the latest version of the core that the package supports. Ensure that the version specified here is the most recent stable release.]]></HELP>
 <!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--84B3B4E21ADD4B188C4E0B6539D9C44A-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>
@@ -420,7 +420,7 @@ This process only deletes the selected module, not its dependencies.]]></PO_HELP
 <!--F00820019A5A4C1B83321E045417997A-->  <COLUMNNAME><![CDATA[From_Core]]></COLUMNNAME>
 <!--F00820019A5A4C1B83321E045417997A-->  <NAME><![CDATA[From Core]]></NAME>
 <!--F00820019A5A4C1B83321E045417997A-->  <PRINTNAME><![CDATA[From Core]]></PRINTNAME>
-<!--F00820019A5A4C1B83321E045417997A-->  <DESCRIPTION><![CDATA[Initial version of the core dependency supported]]></DESCRIPTION>
+<!--F00820019A5A4C1B83321E045417997A-->  <DESCRIPTION><![CDATA[Initial version of the core dependency supported.]]></DESCRIPTION>
 <!--F00820019A5A4C1B83321E045417997A-->  <HELP><![CDATA[Ther column indicates the initial version of the core library that the package supports. It defines the earliest version that is compatible with the package.]]></HELP>
 <!--F00820019A5A4C1B83321E045417997A-->  <AD_MODULE_ID><![CDATA[2EC4FFAFFE984592BA9859A8C9E25BF0]]></AD_MODULE_ID>
 <!--F00820019A5A4C1B83321E045417997A-->  <ISGLOSSARY><![CDATA[N]]></ISGLOSSARY>

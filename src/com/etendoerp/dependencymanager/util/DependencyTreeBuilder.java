@@ -64,7 +64,7 @@ public class DependencyTreeBuilder {
    *     the list of dependencies
    */
   public static void removeDependecyCore(List<PackageDependency> dependencyList) {
-    dependencyList.removeIf(dependency -> dependency.getArtifact().equals(ETENDO_CORE));
+    dependencyList.removeIf(dependency -> StringUtils.equals(ETENDO_CORE, dependency.getArtifact()));
   }
 
   /**
@@ -83,8 +83,8 @@ public class DependencyTreeBuilder {
       PackageDependency existingDependency = dependencyMap.get(key);
       String existingVersion = existingDependency.getVersion();
 
-      if (StringUtils.equals(newVersion, RELEASE) || (!StringUtils.equals(existingVersion,
-          RELEASE) && PackageUtil.compareVersions(newVersion, existingVersion) > 0)) {
+      if (StringUtils.equals(RELEASE, newVersion) || (!StringUtils.equals(RELEASE,
+          existingVersion) && PackageUtil.compareVersions(newVersion, existingVersion) > 0)) {
         dependencyMap.put(key, dependency);
       }
     } else {
@@ -109,7 +109,7 @@ public class DependencyTreeBuilder {
 
     List<PackageDependency> dependencies = dependency.getDependencyVersion().getETDEPPackageDependencyList();
 
-    if (dependencies.size() == 1 && dependencies.get(0).getArtifact().equals(ETENDO_CORE)) {
+    if (dependencies.size() == 1 && StringUtils.equals(ETENDO_CORE, dependencies.get(0).getArtifact())) {
       return new ArrayList<>();
     }
     removeDependecyCore(dependencies);
@@ -153,7 +153,7 @@ public class DependencyTreeBuilder {
     }
 
     List<PackageDependency> dependencies = dependency.getDependencyVersion().getETDEPPackageDependencyList();
-    if (dependencies.size() == 1 && dependencies.get(0).getArtifact().equals(ETENDO_CORE)) {
+    if (dependencies.size() == 1 && StringUtils.equals(ETENDO_CORE, dependencies.get(0).getArtifact())) {
       return new ArrayList<>();
     }
     removeDependecyCore(dependencies);

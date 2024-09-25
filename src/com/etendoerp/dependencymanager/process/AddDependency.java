@@ -152,12 +152,12 @@ public class AddDependency extends BaseActionHandler {
 
     JSONObject grid = jsonContent.optJSONObject("_params").optJSONObject("grid");
     if (grid == null) {
-      throw new JSONException("Missing 'grid' key in '_params'");
+      throw new JSONException(OBMessageUtils.messageBD("ETDEP_Missing_Grid_Key_Params"));
     }
 
     JSONArray paramsSelect = grid.optJSONArray("_selection");
     if (paramsSelect == null) {
-      throw new JSONException("Missing '_selection' key in 'grid'");
+      throw new JSONException(OBMessageUtils.messageBD("ETDEP_Missing_Selection_Key_Grid"));
     }
 
     if (paramsSelect.length() == 0) {
