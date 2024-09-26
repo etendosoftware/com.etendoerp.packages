@@ -1,5 +1,7 @@
 package com.etendoerp.dependencymanager.util;
 
+import org.openbravo.erpCommon.utility.OBMessageUtils;
+
 public class DependencyManagerConstants {
 
   public static final String ARTIFACT = "artifact";
@@ -16,7 +18,6 @@ public class DependencyManagerConstants {
   public static final String SORT_BY = "_sortBy";
 
   private DependencyManagerConstants() {
-
+    throw new UnsupportedOperationException(OBMessageUtils.messageBD("ETDEP_Utility-Class-Cannot-Instantiate"));
   }
-
 }

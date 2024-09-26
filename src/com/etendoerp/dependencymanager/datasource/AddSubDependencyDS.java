@@ -1,94 +1,41 @@
 package com.etendoerp.dependencymanager.datasource;
 
 import static com.etendoerp.dependencymanager.util.DependencyTreeBuilder.removeDependecyCore;
-import static com.etendoerp.dependencymanager.util.PackageUtil.compareVersions;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import org.openbravo.base.exception.OBException;
-import org.openbravo.dal.service.OBDal;
-import org.openbravo.service.datasource.ReadOnlyDataSourceService;
-import org.openbravo.service.json.JsonUtils;
 
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
 import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.DependencyTreeBuilder;
 
-public class AddSubDependencyDS extends ReadOnlyDataSourceService {
+public class AddSubDependencyDS extends AbstractDependencyDS {
 
   /**
-   * Returns the count of the data based on the provided parameters.
-   *
-   * <p>This method retrieves all the data (without limits) and returns the size of the resulting list.</p>
-   *
-   * @param parameters
-   *     The map of parameters used to filter or specify the data.
-   * @return The number of data items that match the given parameters.
-   */
-  @Override
-  protected int getCount(Map<String, String> parameters) {
-    return getData(parameters, 0, Integer.MAX_VALUE).size();
-  }
-
-  /**
-   * Retrieves a list of data maps based on the provided parameters and pagination settings.
-   *
-   * <p>This method fetches a subset of the data starting from {@code startRow} to {@code endRow}.</p>
+   * Retrieves and processes a list of sub-dependencies for the given PackageVersion.
+   * This includes mapping dependencies to their parent artifacts and applying filters and sorting
+   * criteria provided in the parameters.
    *
    * @param parameters
-   *     The map of parameters used to filter or specify the data.
-   * @param startRow
-   *     The starting row index for pagination.
-   * @param endRow
-   *     The ending row index for pagination.
-   * @return A list of data maps containing the retrieved data.
-   * @throws OBException
-   *     If an error occurs during data retrieval.
-   */
-  @Override
-  protected List<Map<String, Object>> getData(Map<String, String> parameters, int startRow, int endRow) {
-    List<Map<String, Object>> result;
-    try {
-      final String strETDEPPackageVersionId = parameters.get("@ETDEP_Package_Version.id@");
-      final PackageVersion packageVersion = OBDal.getInstance().get(PackageVersion.class, strETDEPPackageVersionId);
-
-      result = getGridData(parameters, packageVersion);
-
-    } catch (Exception e) {
-      throw new OBException(e.getMessage());
-    }
-
-    return result;
-  }
-
-  /**
-   * Retrieves the grid data based on the package version and parameters.
-   *
-   * <p>This method processes the package dependencies, builds a map of the dependencies,
-   * and returns a filtered and sorted list of data maps.</p>
-   *
-   * @param parameters
-   *     The map of parameters used to filter the data.
+   *     A map of string parameters for filtering and sorting the results.
    * @param packageVersion
-   *     The version of the package to retrieve the dependencies for.
-   * @return A list of data maps containing the dependency information.
+   *     The version of the package whose sub-dependencies are being processed.
+   * @return A list of maps where each map contains the details of a sub-dependency
+   *     (group, artifact, version, ID, and parent artifact).
    * @throws JSONException
    *     If there is an error processing the JSON data.
    */
-  private List<Map<String, Object>> getGridData(Map<String, String> parameters,
+  @Override
+  protected List<Map<String, Object>> getGridData(Map<String, String> parameters,
       PackageVersion packageVersion) throws JSONException {
-
     List<Map<String, Object>> result = new ArrayList<>();
 
     List<PackageDependency> dependenciesList = packageVersion.getETDEPPackageDependencyList();
@@ -113,137 +60,87 @@ public class AddSubDependencyDS extends ReadOnlyDataSourceService {
       }
       result.add(map);
     }
-    return applyFilterAndSort(parameters, result);
+    return applyFilterAndSort(parameters, result, readCriteria(parameters));
   }
 
   /**
-   * Applies filtering and sorting to the given data based on the provided parameters.
+   * Applies additional filtering based on parent artifact values after the basic filter and sorting.
    *
    * @param parameters
-   *     A map containing the parameters used for filtering and sorting the data.
+   *     A map of string parameters for sorting and filtering.
    * @param result
-   *     A list of maps representing the data to be filtered and sorted.
-   * @return A list of maps representing the filtered and sorted data.
+   *     The list of dependencies to be filtered and sorted.
+   * @param abstractSelectedFilters
+   *     The selected filters applied to the result set.
+   * @return The filtered and sorted list of dependencies.
    * @throws JSONException
-   *     if there is an error processing the JSON data for filtering and sorting.
+   *     If there is an error during filtering or sorting.
    */
-  private List<Map<String, Object>> applyFilterAndSort(Map<String, String> parameters,
-      List<Map<String, Object>> result) throws JSONException {
-    SubDependencySelectedFilters selectedFilters = readCriteria(parameters);
-    //artifact Filter
-    if (selectedFilters.getArtifact() != null) {
-      result = result.stream().filter(
-          row -> StringUtils.contains(row.get(DependencyManagerConstants.ARTIFACT).toString(),
-              selectedFilters.getArtifact())).collect(Collectors.toList());
-    }
-    //group Filter
-    if (selectedFilters.getGroup() != null) {
-      result = result.stream().filter(row -> StringUtils.contains(row.get(DependencyManagerConstants.GROUP).toString(),
-          selectedFilters.getGroup())).collect(Collectors.toList());
-    }
-    //version filter
-    if (selectedFilters.getVersion() != null) {
-      result = result.stream().filter(
-          row -> StringUtils.contains(row.get(DependencyManagerConstants.VERSION).toString(),
-              selectedFilters.getVersion())).collect(Collectors.toList());
-    }
+  @Override
+  protected List<Map<String, Object>> applyFilterAndSort(Map<String, String> parameters,
+      List<Map<String, Object>> result, AbstractSelectedFilters abstractSelectedFilters) throws JSONException {
+    SubDependencySelectedFilters selectedFilters = (SubDependencySelectedFilters) abstractSelectedFilters;
+    result = super.applyFilterAndSort(parameters, result, selectedFilters);
 
-    //parent filter
     if (!selectedFilters.getParent().isEmpty()) {
       result = result.stream().filter(
           row -> selectedFilters.getParent().contains(row.get(DependencyManagerConstants.PARENT))).collect(
           Collectors.toList());
     }
 
-    sortResult(parameters, result);
     return result;
   }
 
-
   /**
-   * Sorts the given data based on the sorting criteria provided in the parameters.
+   * Creates a comparator to sort the list of sub-dependencies based on a specified field.
    *
-   * @param parameters
-   *     A map containing the sorting criteria.
-   * @param result
-   *     A list of maps representing the data to be sorted.
+   * @param sortByField
+   *     The field used to sort the list of sub-dependencies.
+   * @return A new instance of SubDependencyResultComparator.
    */
-  private void sortResult(Map<String, String> parameters, List<Map<String, Object>> result) {
-    String strSortBy = parameters.getOrDefault(DependencyManagerConstants.SORT_BY, DependencyManagerConstants.LINE);
-    Collections.sort(result, new SubDependencyResultComparator(strSortBy));
+  @Override
+  protected AbstractResultComparator createResultComparator(String sortByField) {
+    return new SubDependencyResultComparator(sortByField);
   }
 
   /**
-   * Reads and processes filtering criteria from the provided parameters to create a `DependencySelectedFilters` object.
+   * Creates an instance of SubDependencySelectedFilters to manage filters applied to the sub-dependencies list.
    *
-   * @param parameters
-   *     A map containing the filtering criteria in JSON format.
-   * @return A `DependencySelectedFilters` object populated with the extracted criteria.
-   * @throws JSONException
-   *     if there is an error parsing the JSON data.
+   * @return A new instance of SubDependencySelectedFilters.
    */
-  private SubDependencySelectedFilters readCriteria(Map<String, String> parameters) throws JSONException {
-    SubDependencySelectedFilters selectedFilters = new SubDependencySelectedFilters();
-    JSONArray criteriaArray = (JSONArray) JsonUtils.buildCriteria(parameters).get(DependencyManagerConstants.CRITERIA);
-
-    for (int i = 0; i < criteriaArray.length(); i++) {
-      JSONObject criteria = criteriaArray.getJSONObject(i);
-      if (criteria.has(DependencyManagerConstants.CONSTRUCTOR) && StringUtils.equals(DependencyManagerConstants.ADVANCED_CRITERIA,
-          criteria.getString(DependencyManagerConstants.CONSTRUCTOR)) && criteria.has(DependencyManagerConstants.CRITERIA)) {
-        JSONArray innerCriteriaArray = new JSONArray(criteria.getString(DependencyManagerConstants.CRITERIA));
-        for (int j = 0; j < innerCriteriaArray.length(); j++) {
-          criteria = innerCriteriaArray.getJSONObject(j);
-          addCriteria(selectedFilters, criteria);
-        }
-      } else {
-        addCriteria(selectedFilters, criteria);
-      }
-    }
-    return selectedFilters;
+  @Override
+  protected AbstractSelectedFilters createSelectedFilters() {
+    return new SubDependencySelectedFilters();
   }
 
   /**
-   * Adds filtering criteria from a JSON object to the specified `DependencySelectedFilters` object.
+   * Adds custom filtering criteria to the selected filters based on the specified JSON criteria.
    *
-   * @param selectedFilters
-   *     The `DependencySelectedFilters` object to which the criteria should be added.
+   * @param abstractSelectedFilters
+   *     The selected filters to which criteria are added.
    * @param criteria
-   *     A JSON object containing the filtering criteria.
+   *     The JSON object containing the filtering criteria.
    * @throws JSONException
-   *     if there is an error parsing the JSON object.
+   *     If there is an error processing the JSON data.
    */
-  private void addCriteria(SubDependencySelectedFilters selectedFilters, JSONObject criteria) throws JSONException {
+  @Override
+  protected void addCriteria(AbstractSelectedFilters abstractSelectedFilters,
+      JSONObject criteria) throws JSONException {
+    super.addCriteria(abstractSelectedFilters, criteria);
+    SubDependencySelectedFilters selectedFilters = (SubDependencySelectedFilters) abstractSelectedFilters;
+
     String fieldName = criteria.getString(DependencyManagerConstants.FIELD_NAME);
-
-    if (!criteria.has(DependencyManagerConstants.VALUE)) {
-      return;
-    }
-
-    String value = criteria.getString(DependencyManagerConstants.VALUE);
-
-    if (StringUtils.equals(fieldName, DependencyManagerConstants.GROUP)) {
-      selectedFilters.setGroup(value);
-      return;
-    }
-    if (StringUtils.equals(fieldName, DependencyManagerConstants.ARTIFACT)) {
-      selectedFilters.setArtifact(value);
-      return;
-    }
-    if (StringUtils.equals(fieldName, DependencyManagerConstants.VERSION)) {
-      selectedFilters.setVersion(value);
-    }
     if (StringUtils.equals(fieldName, DependencyManagerConstants.PARENT)) {
-      selectedFilters.addParent(value);
+      selectedFilters.addParent(criteria.getString(DependencyManagerConstants.VALUE));
     }
   }
 
   private static class SubDependencyResultComparator extends AbstractResultComparator {
-
     /**
-     * Constructs an instance of {@code SubDependencyResultComparator} with the specified field to sort by.
-     * Adds the "parent" field to the list of string fields used for comparison.
+     * Constructor that initializes the comparator with the field by which to sort.
      *
-     * @param sortByField the field name to sort by
+     * @param sortByField
+     *     The field used for sorting the sub-dependencies.
      */
     public SubDependencyResultComparator(String sortByField) {
       super(sortByField);
@@ -252,13 +149,10 @@ public class AddSubDependencyDS extends ReadOnlyDataSourceService {
   }
 
   private static class SubDependencySelectedFilters extends AbstractSelectedFilters {
-    /**
-     * List of parent dependencies for filtering sub-dependencies.
-     */
     private List<String> parent;
 
     /**
-     * Constructs an instance of {@code SubDependencySelectedFilters} with an empty list of parent dependencies.
+     * Default constructor that initializes the parent filter list.
      */
     public SubDependencySelectedFilters() {
       super();
@@ -266,31 +160,32 @@ public class AddSubDependencyDS extends ReadOnlyDataSourceService {
     }
 
     /**
-     * Returns the list of parent dependencies.
+     * Retrieves the list of parent filters.
      *
-     * @return the list of parent dependencies
+     * @return The list of parent filters.
      */
     public List<String> getParent() {
       return parent;
     }
 
     /**
-     * Sets the list of parent dependencies.
+     * Sets the list of parent filters.
      *
-     * @param parentL the new list of parent dependencies
+     * @param parentL
+     *     The list of parent filters to set.
      */
     public void setParent(List<String> parentL) {
       this.parent = parentL;
     }
 
     /**
-     * Adds a parent dependency to the list.
+     * Adds a parent artifact to the list of filters.
      *
-     * @param parent the parent dependency to add
+     * @param parent
+     *     The parent artifact to add.
      */
     public void addParent(String parent) {
       this.parent.add(parent);
     }
   }
-
 }

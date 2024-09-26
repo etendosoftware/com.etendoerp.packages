@@ -769,7 +769,7 @@
 <!--4B757554746E4911A8C7F8BE26F22C77-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--4B757554746E4911A8C7F8BE26F22C77-->  <NAME><![CDATA[Artifact]]></NAME>
 <!--4B757554746E4911A8C7F8BE26F22C77-->  <DESCRIPTION><![CDATA[Specify the artifact of the module.]]></DESCRIPTION>
-<!--4B757554746E4911A8C7F8BE26F22C77-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package]]></HELP>
+<!--4B757554746E4911A8C7F8BE26F22C77-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package.]]></HELP>
 <!--4B757554746E4911A8C7F8BE26F22C77-->  <COLUMNNAME><![CDATA[Artifact]]></COLUMNNAME>
 <!--4B757554746E4911A8C7F8BE26F22C77-->  <AD_TABLE_ID><![CDATA[189D47D0FB794861B7D760DA99EAA609]]></AD_TABLE_ID>
 <!--4B757554746E4911A8C7F8BE26F22C77-->  <AD_REFERENCE_ID><![CDATA[10]]></AD_REFERENCE_ID>
@@ -1197,7 +1197,7 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <NAME><![CDATA[Latest Core]]></NAME>
-<!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <DESCRIPTION><![CDATA[Latest version of the core dependency supported]]></DESCRIPTION>
+<!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <DESCRIPTION><![CDATA[Latest version of the core dependency supported.]]></DESCRIPTION>
 <!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <HELP><![CDATA[The column stores the latest version of the core that the package supports. Ensure that the version specified here is the most recent stable release.]]></HELP>
 <!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <COLUMNNAME><![CDATA[Latest_Core]]></COLUMNNAME>
 <!--6F9FFCAF154B4EEBB9033BC83070C6D9-->  <AD_TABLE_ID><![CDATA[9EA8052732C3415E80B14DA71FBB829F]]></AD_TABLE_ID>
@@ -1236,7 +1236,7 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--70ED9EBA09CC45A2B174971B541B2D3A-->  <AD_ORG_ID><![CDATA[0]]></AD_ORG_ID>
 <!--70ED9EBA09CC45A2B174971B541B2D3A-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--70ED9EBA09CC45A2B174971B541B2D3A-->  <NAME><![CDATA[From Core]]></NAME>
-<!--70ED9EBA09CC45A2B174971B541B2D3A-->  <DESCRIPTION><![CDATA[Initial version of the core dependency supported]]></DESCRIPTION>
+<!--70ED9EBA09CC45A2B174971B541B2D3A-->  <DESCRIPTION><![CDATA[Initial version of the core dependency supported.]]></DESCRIPTION>
 <!--70ED9EBA09CC45A2B174971B541B2D3A-->  <HELP><![CDATA[Ther column indicates the initial version of the core library that the package supports. It defines the earliest version that is compatible with the package.]]></HELP>
 <!--70ED9EBA09CC45A2B174971B541B2D3A-->  <COLUMNNAME><![CDATA[From_Core]]></COLUMNNAME>
 <!--70ED9EBA09CC45A2B174971B541B2D3A-->  <AD_TABLE_ID><![CDATA[9EA8052732C3415E80B14DA71FBB829F]]></AD_TABLE_ID>
@@ -1435,7 +1435,7 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--881276F04B3A453D8C803BB99F0AA5D3-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--881276F04B3A453D8C803BB99F0AA5D3-->  <NAME><![CDATA[Artifact]]></NAME>
 <!--881276F04B3A453D8C803BB99F0AA5D3-->  <DESCRIPTION><![CDATA[Specify the artifact of the module.]]></DESCRIPTION>
-<!--881276F04B3A453D8C803BB99F0AA5D3-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package]]></HELP>
+<!--881276F04B3A453D8C803BB99F0AA5D3-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package.]]></HELP>
 <!--881276F04B3A453D8C803BB99F0AA5D3-->  <COLUMNNAME><![CDATA[Artifact]]></COLUMNNAME>
 <!--881276F04B3A453D8C803BB99F0AA5D3-->  <AD_TABLE_ID><![CDATA[0DA129A7E8A04EE2AD1325CDC4078636]]></AD_TABLE_ID>
 <!--881276F04B3A453D8C803BB99F0AA5D3-->  <AD_REFERENCE_ID><![CDATA[10]]></AD_REFERENCE_ID>
@@ -1824,7 +1824,7 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--B319612196DA46AE96C275A80F29DB8A-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--B319612196DA46AE96C275A80F29DB8A-->  <NAME><![CDATA[Artifact]]></NAME>
 <!--B319612196DA46AE96C275A80F29DB8A-->  <DESCRIPTION><![CDATA[Specify the artifact of the module.]]></DESCRIPTION>
-<!--B319612196DA46AE96C275A80F29DB8A-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package]]></HELP>
+<!--B319612196DA46AE96C275A80F29DB8A-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package.]]></HELP>
 <!--B319612196DA46AE96C275A80F29DB8A-->  <COLUMNNAME><![CDATA[Artifact]]></COLUMNNAME>
 <!--B319612196DA46AE96C275A80F29DB8A-->  <AD_TABLE_ID><![CDATA[FE1C3952DDBB4B3D8F048A11A603A9D7]]></AD_TABLE_ID>
 <!--B319612196DA46AE96C275A80F29DB8A-->  <AD_REFERENCE_ID><![CDATA[10]]></AD_REFERENCE_ID>
@@ -1863,7 +1863,7 @@ This means that the dependency can only be downloaded in jar format, and no vers
 <!--B35A7CD46D414AE7856824CA370A6BEF-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--B35A7CD46D414AE7856824CA370A6BEF-->  <NAME><![CDATA[Artifact]]></NAME>
 <!--B35A7CD46D414AE7856824CA370A6BEF-->  <DESCRIPTION><![CDATA[Specify the artifact of the module.]]></DESCRIPTION>
-<!--B35A7CD46D414AE7856824CA370A6BEF-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package]]></HELP>
+<!--B35A7CD46D414AE7856824CA370A6BEF-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package.]]></HELP>
 <!--B35A7CD46D414AE7856824CA370A6BEF-->  <COLUMNNAME><![CDATA[Artifact]]></COLUMNNAME>
 <!--B35A7CD46D414AE7856824CA370A6BEF-->  <AD_TABLE_ID><![CDATA[F2C0EAFEF99F4EAAA02C91E85FE53238]]></AD_TABLE_ID>
 <!--B35A7CD46D414AE7856824CA370A6BEF-->  <AD_REFERENCE_ID><![CDATA[10]]></AD_REFERENCE_ID>
@@ -2616,7 +2616,7 @@ This process only deletes the selected module, not its dependencies.]]></HELP>
 <!--F828E07D1EFB4169AC5390F0AE619967-->  <ISACTIVE><![CDATA[Y]]></ISACTIVE>
 <!--F828E07D1EFB4169AC5390F0AE619967-->  <NAME><![CDATA[Artifact]]></NAME>
 <!--F828E07D1EFB4169AC5390F0AE619967-->  <DESCRIPTION><![CDATA[Specify the artifact of the module.]]></DESCRIPTION>
-<!--F828E07D1EFB4169AC5390F0AE619967-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package]]></HELP>
+<!--F828E07D1EFB4169AC5390F0AE619967-->  <HELP><![CDATA[Provide the artifact identifier for the module. This is a unique name that identifies the module within its group, typically corresponding to the project or package.]]></HELP>
 <!--F828E07D1EFB4169AC5390F0AE619967-->  <COLUMNNAME><![CDATA[Artifact]]></COLUMNNAME>
 <!--F828E07D1EFB4169AC5390F0AE619967-->  <AD_TABLE_ID><![CDATA[1A937C12D6254DF49D65FCF238201B1B]]></AD_TABLE_ID>
 <!--F828E07D1EFB4169AC5390F0AE619967-->  <AD_REFERENCE_ID><![CDATA[10]]></AD_REFERENCE_ID>
