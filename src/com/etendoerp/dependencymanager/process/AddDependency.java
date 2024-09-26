@@ -307,7 +307,7 @@ public class AddDependency extends BaseActionHandler {
 
     String group = packageDependency.getGroup();
     String artifact = packageDependency.getArtifact();
-    Module installedModule = DependencyUtil.getInstalledModule(group, artifact, packageDependency.getVersion());
+    Module installedModule = DependencyUtil.getInstalledModule(group, artifact);
     Dependency existingDependency = DependencyUtil.getInstalledDependency(group, artifact,
         packageDependency.isExternalDependency());
 
@@ -483,26 +483,24 @@ public class AddDependency extends BaseActionHandler {
   }
 
   /**
-   * Retrieves the title message corresponding to the specified message type.
-   * <p>
-   * This method returns a localized title based on the message type provided. It supports
-   * message types such as SUCCESS, WARNING, and ERROR, returning appropriate titles for each.
-   * If the message type is not recognized, a default title of "Message" is returned.
+   * Returns a title based on the provided message type.
    *
    * @param messageType
-   *     The type of the message (e.g., SUCCESS, WARNING, ERROR) for which the title is requested.
-   * @return A localized string representing the title for the specified message type.
+   *     the type of the message (e.g., SUCCESS, WARNING, ERROR)
+   * @return a String representing the title for the specified message type.
+   *     Returns "Success" for SUCCESS, "Warning" for WARNING,
+   *     "Error" for ERROR, and "Message" for any other type.
    */
   private String getTitleForMessageType(String messageType) {
     switch (messageType) {
       case SUCCESS:
-        return OBMessageUtils.messageBD("Success");
+        return "Success";
       case WARNING:
-        return OBMessageUtils.messageBD("Warning");
+        return "Warning";
       case ERROR:
-        return OBMessageUtils.messageBD("Error");
+        return "Error";
       default:
-        return OBMessageUtils.messageBD("Message");
+        return "Message";
     }
   }
 }

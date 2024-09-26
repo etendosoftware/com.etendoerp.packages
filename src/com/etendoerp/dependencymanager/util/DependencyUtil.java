@@ -68,10 +68,9 @@ public class DependencyUtil {
    *
    * @param group The group identifier of the module to be retrieved.
    * @param artifact The artifact identifier of the module to be retrieved.
-   * @param version The version of the module (though not used in this method).
    * @return The installed `Module` object that matches the criteria, or null if no match is found.
    */
-  public static Module getInstalledModule(String group, String artifact, String version) {
+  public static Module getInstalledModule(String group, String artifact) {
     OBCriteria<Module> moduleOBCriteria = OBDal.getInstance().createCriteria(Module.class);
     moduleOBCriteria.add(Restrictions.eq(Module.PROPERTY_JAVAPACKAGE, group+"."+artifact));
     return (Module) moduleOBCriteria.setMaxResults(1).uniqueResult();
