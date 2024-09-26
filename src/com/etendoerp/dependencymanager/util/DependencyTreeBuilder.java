@@ -2,8 +2,10 @@ package com.etendoerp.dependencymanager.util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
@@ -113,14 +115,14 @@ public class DependencyTreeBuilder {
       return new ArrayList<>();
     }
     removeDependecyCore(dependencies);
-    List<PackageDependency> allDependencies = new ArrayList<>(dependencies);
+    Set<PackageDependency> allDependencies = new HashSet<>(dependencies);
 
     for (PackageDependency dep : dependencies) {
       List<PackageDependency> subDependencies = searchDependency(dep, dependencyMap);
       allDependencies.addAll(subDependencies);
     }
 
-    return allDependencies;
+    return new ArrayList<>(allDependencies);
   }
 
   /**
@@ -157,7 +159,7 @@ public class DependencyTreeBuilder {
       return new ArrayList<>();
     }
     removeDependecyCore(dependencies);
-    List<PackageDependency> allDependencies = new ArrayList<>(dependencies);
+    Set<PackageDependency> allDependencies = new HashSet<>(dependencies);
 
     for (PackageDependency dep : dependencies) {
       parentMap.put(dep.getId(), dependency.getId());
@@ -165,7 +167,7 @@ public class DependencyTreeBuilder {
       List<PackageDependency> subDependencies = searchSubDependency(dep, parentMap);
       allDependencies.addAll(subDependencies);
     }
-    return allDependencies;
+    return  new ArrayList<>(allDependencies);
   }
 
   /**
