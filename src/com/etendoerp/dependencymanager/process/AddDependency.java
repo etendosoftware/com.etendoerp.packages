@@ -75,24 +75,30 @@ public class AddDependency extends BaseActionHandler {
   private static List<PackageDependency> getPackageDependencies(PackageVersion packageVersion,
       JSONObject jsonContent) throws JSONException {
     boolean isBundle = packageVersion.getPackage().isBundle();
+    log.debug("Getting dependencies for packageVersion: %s", packageVersion.getPackage().getIdentifier());
     if (!isBundle) {
+      log.debug("Non-bundle package, creating dependency tree");
       return DependencyTreeBuilder.createDependencyTree(packageVersion);
     }
 
     JSONObject grid = jsonContent.optJSONObject("_params").optJSONObject("grid");
     if (grid == null) {
+      log.error("Missing 'grid' in parameters");
       throw new JSONException(OBMessageUtils.messageBD("ETDEP_Missing_Grid_Key_Params"));
     }
 
     JSONArray paramsSelect = grid.optJSONArray("_selection");
     if (paramsSelect == null) {
+      log.error("Missing 'selection' in grid");
       throw new JSONException(OBMessageUtils.messageBD("ETDEP_Missing_Selection_Key_Grid"));
     }
 
     if (paramsSelect.length() == 0) {
+      log.debug("No selection found, returning empty list");
       return new ArrayList<>();
     }
 
+    log.debug("Adding dependencies from selection");
     return DependencyTreeBuilder.addDependenciesFromParams(paramsSelect);
   }
 
