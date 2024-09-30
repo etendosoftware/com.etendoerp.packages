@@ -132,7 +132,7 @@ public class DependencyTreeBuilder {
    *     the dependency to check
    * @return true if the dependency is a bundle, false otherwise
    */
-  private static boolean isBundle(PackageDependency dependency) {
+  public static boolean isBundle(PackageDependency dependency) {
     // Check if the artifact contains '.extensions'
     return dependency.getArtifact().contains(".extensions");
   }
