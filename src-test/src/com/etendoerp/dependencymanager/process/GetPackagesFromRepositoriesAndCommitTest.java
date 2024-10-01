@@ -1,6 +1,7 @@
 package com.etendoerp.dependencymanager.process;
 
 import org.apache.commons.lang.StringUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -51,7 +52,6 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
     private static final String AD_DATASET_ID = "9F0311EFA2C1406D81B03FE673FF0A17";
     private static final String AD_MODULE_ID = "2EC4FFAFFE984592BA9859A8C9E25BF0";
     private static final String LANGUAGE = "en_US";
-    private static final String SETUP_SCRIPT = "setup.sh";
     private static final String GIT_OPERATIONS_SCRIPT = "git_operations.sh";
     private void setupMocks(ProcessBundle bundle, ProcessContext context, ConnectionProvider conn, ProcessLogger loggerMock) {
         when(bundle.getLogger()).thenReturn(loggerMock);
@@ -179,7 +179,6 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         Mockito.doReturn("Script output").when(processSpy).executeScript(Mockito.anyString());
         processSpy.doExecute(bundle);
         verify(processSpy).processButton(Mockito.eq(LANGUAGE), Mockito.eq(conn));
-        verify(processSpy).executeScript(SETUP_SCRIPT);
         verify(processSpy).executeScript(GIT_OPERATIONS_SCRIPT);
     }
 
@@ -274,7 +273,6 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         Mockito.doNothing().when(processSpy).executeGetPackagesProcess(any());
         Mockito.doReturn("Script executed successfully.\n").when(processSpy).executeScript(anyString());
         processSpy.doExecute(bundle);
-        verify(processSpy).executeScript(SETUP_SCRIPT);
         verify(processSpy).executeScript(GIT_OPERATIONS_SCRIPT);
     }
 
@@ -315,15 +313,8 @@ public class GetPackagesFromRepositoriesAndCommitTest extends WeldBaseTest {
         assertTrue(StringUtils.contains(exception.getMessage(), "Script execution failed"));
     }
 
-    /**
-     * Test case for verifying successful script execution.
-     * Ensures that a success message is returned when the script is executed without errors.
-     */
-    @Test
-    public void testExecuteScriptSuccess() {
-        String result = process.executeScript(SETUP_SCRIPT);
-        assertNotNull(result);
-        assertFalse(StringUtils.contains(result, "An error occurred:"));
-        assertTrue(StringUtils.contains(result, "Script executed successfully"));
+    @After
+    public void cleanUp() {
+        OBDal.getInstance().rollbackAndClose();
     }
 }

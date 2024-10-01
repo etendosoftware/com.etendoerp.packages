@@ -231,11 +231,12 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
    * @return
    */
   private Package findOrCreatePackage(String group, String artifact) {
-    Package pkg = OBDal.getInstance()
-      .createQuery(Package.class, "e where e.group = :group and e.artifact = :artifact")
-      .setNamedParameter(DependencyManagerConstants.GROUP, group)
-      .setNamedParameter(DependencyManagerConstants.ARTIFACT, artifact)
-      .uniqueResult();
+    OBCriteria<Package> obCriteria = OBDal.getInstance().createCriteria(Package.class);
+    obCriteria.add(Restrictions.eq(DependencyManagerConstants.GROUP, group));
+    obCriteria.add(Restrictions.eq(DependencyManagerConstants.ARTIFACT, artifact));
+    obCriteria.setMaxResults(1);
+
+    Package pkg = (Package) obCriteria.uniqueResult();
 
     if (pkg == null) {
       pkg = new Package();

@@ -1,8 +1,12 @@
 #!/bin/bash
 
+source /opt/EtendoERP/modules/com.etendoerp.dependencymanager/.env
+
 function pushAndCommit(){
 
     # Get the root directory of the Git repository
+    cd /opt/EtendoERP/ || { echo "Error: Could not change to /opt/EtendoERP directory."; exit 1; }
+
     REPO_DIR=$(git rev-parse --show-toplevel 2>/dev/null)
 
     if [ $? -ne 0 ]; then
@@ -13,6 +17,10 @@ function pushAndCommit(){
     # Set the target directory within the repository
     TARGET_DIR="$REPO_DIR/modules/com.etendoerp.dependencymanager/"
     cd "$TARGET_DIR" || { echo "Error: Could not change to directory $TARGET_DIR."; exit 1; }
+
+    # Configure Git user and email address
+    git config --local user.name "$GITHUB_USER"
+    git config --local user.email "$GITHUB_MAIL"
 
     # Switch to the 'main' branch and perform a pull
     git checkout main > /dev/null 2>&1 || { echo "Error: Could not checkout to branch 'main'."; exit 1; }

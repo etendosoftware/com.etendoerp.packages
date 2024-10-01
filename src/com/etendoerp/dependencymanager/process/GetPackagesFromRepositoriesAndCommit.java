@@ -9,6 +9,7 @@ package com.etendoerp.dependencymanager.process;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openbravo.base.session.OBPropertiesProvider;
 import org.openbravo.dal.service.OBDal;
 import org.openbravo.database.ConnectionProvider;
 import org.openbravo.ddlutils.util.ModulesUtil;
@@ -60,19 +61,14 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
         executeGetPackagesProcess(bundle);
         logger.logln("Get Packages Process: " + OBMessageUtils.messageBD(SUCCESS));
 
-        String scriptToRun1 = "setup.sh";
-        String scriptOutput1 = executeScript(scriptToRun1);
-        logger.logln("Script Output for " + scriptToRun1 + ":\n" + scriptOutput1);
-
         ProcessContext context = bundle.getContext();
         String language = context.getLanguage();
         processButton(language, bundle.getConnection());
         logger.logln("Export Reference Data: " + OBMessageUtils.messageBD(SUCCESS));
 
-        String scriptToRun2 = "git_operations.sh";
-        String scriptOutput2 = executeScript(scriptToRun2);
-        logger.logln("Script Output for " + scriptToRun2 + ":\n" + scriptOutput2);
-
+        String scriptToRun = "git_operations.sh";
+        String scriptOutput = executeScript(scriptToRun);
+        logger.logln("Script Output for " + scriptToRun + ":\n" + scriptOutput);
     }
 
     /**
@@ -174,13 +170,9 @@ public class GetPackagesFromRepositoriesAndCommit extends DalBaseProcess {
      * @return The absolute path of the project.
      */
     protected String getProjectPath() {
-        String absolute = getClass().getProtectionDomain().getCodeSource().getLocation().toExternalForm();
-        if (StringUtils.startsWith(absolute, "file:")) {
-            absolute = StringUtils.substring(absolute, 5);
-        }
-        File classesDir = new File(absolute);
-        File projectDir = classesDir.getParentFile().getParentFile();
-        return projectDir.getAbsolutePath();
+        return OBPropertiesProvider.getInstance()
+                .getOpenbravoProperties()
+                .getProperty("source.path");
     }
 
     /**
