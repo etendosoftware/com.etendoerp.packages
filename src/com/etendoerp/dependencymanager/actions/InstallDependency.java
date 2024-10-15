@@ -3,6 +3,7 @@ package com.etendoerp.dependencymanager.actions;
 import com.etendoerp.dependencymanager.data.Dependency;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 import com.smf.jobs.Action;
 import com.smf.jobs.ActionResult;
@@ -119,8 +120,8 @@ public class InstallDependency extends Action {
   private synchronized void updateOrCreateDependency(String group, String artifact, String version) {
     Dependency existingDependency = OBDal.getInstance()
         .createQuery(Dependency.class, "as pv where pv.group = :group and pv.artifact = :artifact")
-        .setNamedParameter(PackageUtil.GROUP, group)
-        .setNamedParameter(PackageUtil.ARTIFACT, artifact)
+        .setNamedParameter(DependencyManagerConstants.GROUP, group)
+        .setNamedParameter(DependencyManagerConstants.ARTIFACT, artifact)
         .uniqueResult();
 
     String latestVersion = fetchLatestVersion(group, artifact);
@@ -145,8 +146,8 @@ public class InstallDependency extends Action {
   private void updateInstalledVersion(String group, String artifact, String version) {
     Package etdepPackage = OBDal.getInstance()
         .createQuery(Package.class, "where depgroup = :group and artifact = :artifact")
-        .setNamedParameter(PackageUtil.GROUP, group)
-        .setNamedParameter(PackageUtil.ARTIFACT, artifact)
+        .setNamedParameter(DependencyManagerConstants.GROUP, group)
+        .setNamedParameter(DependencyManagerConstants.ARTIFACT, artifact)
         .uniqueResult();
 
     if (etdepPackage != null) {

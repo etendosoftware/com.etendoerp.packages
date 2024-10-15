@@ -110,6 +110,7 @@ public class AddLocalDependencies extends BaseActionHandler {
         dependency.setGroup(group);
         dependency.setArtifact(artifact);
         dependency.setVersion(module.getVersion());
+        dependency.setVersionStatus(DependencyUtil.UNTRACKED_STATUS);
         dependency.setInstallationStatus(DependencyUtil.STATUS_INSTALLED);
         dependency.setFormat(DependencyUtil.FORMAT_LOCAL);
         dependency.setInstalledModule(module);

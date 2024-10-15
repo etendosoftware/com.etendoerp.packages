@@ -3,6 +3,7 @@ package com.etendoerp.dependencymanager.process;
 import com.etendoerp.dependencymanager.data.Package;
 import com.etendoerp.dependencymanager.data.PackageDependency;
 import com.etendoerp.dependencymanager.data.PackageVersion;
+import com.etendoerp.dependencymanager.util.DependencyManagerConstants;
 import com.etendoerp.dependencymanager.util.PackageUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -230,11 +231,12 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
    * @return
    */
   private Package findOrCreatePackage(String group, String artifact) {
-    Package pkg = OBDal.getInstance()
-      .createQuery(Package.class, "e where e.group = :group and e.artifact = :artifact")
-      .setNamedParameter(PackageUtil.GROUP, group)
-      .setNamedParameter(PackageUtil.ARTIFACT, artifact)
-      .uniqueResult();
+    OBCriteria<Package> obCriteria = OBDal.getInstance().createCriteria(Package.class);
+    obCriteria.add(Restrictions.eq(DependencyManagerConstants.GROUP, group));
+    obCriteria.add(Restrictions.eq(DependencyManagerConstants.ARTIFACT, artifact));
+    obCriteria.setMaxResults(1);
+
+    Package pkg = (Package) obCriteria.uniqueResult();
 
     if (pkg == null) {
       pkg = new Package();
@@ -339,7 +341,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     PackageVersion pkgVersion = OBDal.getInstance()
       .createQuery(PackageVersion.class, "e where e.package.id = :packageId and e.version = :version")
       .setNamedParameter("packageId", pkg.getId())
-      .setNamedParameter(PackageUtil.VERSION, version)
+      .setNamedParameter(DependencyManagerConstants.VERSION, version)
       .uniqueResult();
 
     if (pkgVersion == null) {
@@ -413,7 +415,13 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
         for (Element dependency : dependencies.elements("dependency")) {
           String groupId = dependency.elementText("groupId");
           String artifactId = dependency.elementText("artifactId");
-          String versionDep = dependency.elementText(PackageUtil.VERSION);
+          String versionDep = dependency.elementText(DependencyManagerConstants.VERSION);
+
+          if (StringUtils.equals(groupId, "com.etendoerp.platform") || StringUtils.equals(artifactId, "etendo-core")) {
+            log.debug("Skipping excluded dependency: groupId={}, artifactId={}", groupId, artifactId);
+            continue;
+          }
+
           findOrCreatePackageDependency(pkgVersion, groupId, artifactId, versionDep);
         }
       }
@@ -433,9 +441,9 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     PackageDependency dep = OBDal.getInstance()
       .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId and e.group = :group and e.artifact = :artifact and e.version = :version")
       .setNamedParameter("packageVersionId", pkgVersion.getId())
-      .setNamedParameter(PackageUtil.GROUP, group)
-      .setNamedParameter(PackageUtil.ARTIFACT, artifact)
-      .setNamedParameter(PackageUtil.VERSION, version)
+      .setNamedParameter(DependencyManagerConstants.GROUP, group)
+      .setNamedParameter(DependencyManagerConstants.ARTIFACT, artifact)
+      .setNamedParameter(DependencyManagerConstants.VERSION, version)
       .uniqueResult();
 
     if (dep == null) {
