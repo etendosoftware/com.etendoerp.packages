@@ -33,7 +33,7 @@ function pushAndCommit(){
         echo "There are changes in the specified file. Proceeding with commit and push."
         git add referencedata/standard/Packages_dataset.xml || { echo "Error: Could not add the file to commit."; exit 1; }
         git commit -m "Update packages dataset :package:" || { echo "Error: Could not commit."; exit 1; }
-        git push || { echo "Error: Could not push."; exit 1; }
+        git push -f || { echo "Error: Could not push."; exit 1; }
     fi
 }
 
