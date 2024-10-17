@@ -4,18 +4,8 @@ source /opt/EtendoERP/modules/com.etendoerp.dependencymanager/.env
 
 function pushAndCommit(){
 
-    # Get the root directory of the Git repository
-    cd /opt/EtendoERP/ || { echo "Error: Could not change to /opt/EtendoERP directory."; exit 1; }
-
-    REPO_DIR=$(git rev-parse --show-toplevel 2>/dev/null)
-
-    if [ $? -ne 0 ]; then
-        echo "Error: You are not in a Git repository. Check your location."
-        exit 1
-    fi
-
     # Set the target directory within the repository
-    TARGET_DIR="$REPO_DIR/modules/com.etendoerp.dependencymanager/"
+    TARGET_DIR="/opt/EtendoERP/modules/com.etendoerp.dependencymanager/"
     cd "$TARGET_DIR" || { echo "Error: Could not change to directory $TARGET_DIR."; exit 1; }
 
     # Configure Git user and email address
@@ -33,7 +23,7 @@ function pushAndCommit(){
         echo "There are changes in the specified file. Proceeding with commit and push."
         git add referencedata/standard/Packages_dataset.xml || { echo "Error: Could not add the file to commit."; exit 1; }
         git commit -m "Update packages dataset :package:" || { echo "Error: Could not commit."; exit 1; }
-        git push -f || { echo "Error: Could not push."; exit 1; }
+        git push || { echo "Error: Could not push."; exit 1; }
     fi
 }
 
