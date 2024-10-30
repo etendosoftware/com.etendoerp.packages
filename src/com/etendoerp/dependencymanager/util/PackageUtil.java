@@ -56,59 +56,94 @@ public class PackageUtil {
     JSONObject result = new JSONObject();
     try {
       PackageVersion pkgVersion = getPackageVersion(pkg, version);
-      PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream().filter(
-          dep -> StringUtils.equals(ETENDO_CORE, dep.getArtifact())).findFirst().orElse(null);
+      PackageDependency coreDep = getCoreDependency(pkgVersion);
 
       String currentCoreVersion = OBDal.getInstance().get(Module.class, "0").getVersion();
       result.put(CURRENT_CORE_VERSION, currentCoreVersion);
 
       if (coreDep == null) {
-        String fromCore = pkgVersion.getFromCore();
-        String latestCore = pkgVersion.getLatestCore();
-
-        if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
-          result.put(IS_COMPATIBLE, true);
-          result.put(CORE_VERSION_RANGE, "No version range available");
-        } else {
-          String coreVersionRange = "[" + fromCore + ", " + latestCore + ")";
-          result.put(CORE_VERSION_RANGE, coreVersionRange);
-
-          boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
-          result.put(IS_COMPATIBLE, isCompatible);
-        }
+        handleNoCoreDependency(pkgVersion, currentCoreVersion, result);
       } else {
-        String coreVersionRange = coreDep.getVersion();
-
-        if (StringUtils.isEmpty(coreVersionRange)) {
-          String fromCore = pkgVersion.getFromCore();
-          String latestCore = pkgVersion.getLatestCore();
-
-          if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
-            result.put(IS_COMPATIBLE, true);
-            result.put(CORE_VERSION_RANGE, "No version range available");
-          } else {
-            coreVersionRange = "[" + fromCore + ", " + latestCore + ")";
-            result.put(CORE_VERSION_RANGE, coreVersionRange);
-
-            boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
-            result.put(IS_COMPATIBLE, isCompatible);
-          }
-        } else {
-          result.put(CORE_VERSION_RANGE, coreVersionRange);
-
-          boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
-          result.put(IS_COMPATIBLE, isCompatible);
-        }
+        handleCoreDependency(coreDep, currentCoreVersion, pkgVersion, result);
       }
     } catch (Exception e) {
-      try {
-        result.put(IS_COMPATIBLE, false);
-        result.put("error", "An error occurred: " + e.getMessage());
-      } catch (JSONException jsonEx) {
-        log.error(jsonEx);
-      }
+      handleError(result, e);
     }
     return result;
+  }
+
+  /**
+   * Retrieves the core dependency from the package version if it exists.
+   *
+   * @param pkgVersion the package version to check for the core dependency
+   * @return the core dependency, or null if not found
+   */
+  private static PackageDependency getCoreDependency(PackageVersion pkgVersion) {
+    return pkgVersion.getETDEPPackageDependencyList().stream()
+            .filter(dep -> StringUtils.equals(ETENDO_CORE, dep.getArtifact()))
+            .findFirst()
+            .orElse(null);
+  }
+
+  /**
+   * Handles the scenario where no core dependency is found.
+   *
+   * @param pkgVersion        the package version to check
+   * @param currentCoreVersion the current core version
+   * @param result            the JSONObject to store the compatibility result
+   * @throws JSONException if an error occurs while updating the result
+   */
+  private static void handleNoCoreDependency(PackageVersion pkgVersion, String currentCoreVersion, JSONObject result) throws JSONException {
+    String fromCore = pkgVersion.getFromCore();
+    String latestCore = pkgVersion.getLatestCore();
+
+    if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
+      result.put(IS_COMPATIBLE, true);
+      result.put(CORE_VERSION_RANGE, "No version range available");
+    } else {
+      String coreVersionRange = "[" + fromCore + ", " + latestCore + ")";
+      result.put(CORE_VERSION_RANGE, coreVersionRange);
+
+      boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
+      result.put(IS_COMPATIBLE, isCompatible);
+    }
+  }
+
+  /**
+   * Handles the scenario where a core dependency is found.
+   *
+   * @param coreDep           the core dependency found
+   * @param currentCoreVersion the current core version
+   * @param pkgVersion        the package version being checked
+   * @param result            the JSONObject to store the compatibility result
+   * @throws JSONException if an error occurs while updating the result
+   */
+  private static void handleCoreDependency(PackageDependency coreDep, String currentCoreVersion, PackageVersion pkgVersion, JSONObject result) throws JSONException {
+    String coreVersionRange = coreDep.getVersion();
+
+    if (StringUtils.isEmpty(coreVersionRange)) {
+      handleNoCoreDependency(pkgVersion, currentCoreVersion, result);
+    } else {
+      result.put(CORE_VERSION_RANGE, coreVersionRange);
+
+      boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
+      result.put(IS_COMPATIBLE, isCompatible);
+    }
+  }
+
+  /**
+   * Handles exceptions by setting an error message in the result.
+   *
+   * @param result the JSONObject to store the error message
+   * @param e      the exception that occurred
+   */
+  private static void handleError(JSONObject result, Exception e) {
+    try {
+      result.put(IS_COMPATIBLE, false);
+      result.put("error", "An error occurred: " + e.getMessage());
+    } catch (JSONException jsonEx) {
+      log.error(jsonEx);
+    }
   }
 
   /**

@@ -43,6 +43,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
   private static final String CORE_VERSION_RANGE = "coreVersionRange";
   private static final String ETENDO_CORE = "etendo-core";
   private static final String UPDATE_TO_CORE_VERSION = "updateToCoreVersion";
+  private static final String ERROR = "error";
 
   /**
    * Executes the version change operation.
@@ -71,8 +72,8 @@ public class SelectorChangeVersion extends BaseActionHandler {
 
       JSONObject coreVersionInfo = processCoreDependency(updateToPackageVersion);
       String coreVersionRange = coreVersionInfo.optString(CORE_VERSION_RANGE);
-      if (coreVersionInfo.has("error")) {
-        jsonResponse.put("error", coreVersionInfo.getString("error"));
+      if (coreVersionInfo.has(ERROR)) {
+        jsonResponse.put(ERROR, coreVersionInfo.getString(ERROR));
         return jsonResponse;
       }
 
@@ -147,7 +148,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
 
     } catch (Exception e) {
       try {
-        result.put("error", "An error occurred: " + e.getMessage());
+        result.put(ERROR, "An error occurred: " + e.getMessage());
       } catch (JSONException jsonEx) {
         log.error("Error creating JSON response", jsonEx);
       }
