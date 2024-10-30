@@ -63,13 +63,42 @@ public class PackageUtil {
       result.put(CURRENT_CORE_VERSION, currentCoreVersion);
 
       if (coreDep == null) {
-        result.put(IS_COMPATIBLE, true);
+        String fromCore = pkgVersion.getFromCore();
+        String latestCore = pkgVersion.getLatestCore();
+
+        if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
+          result.put(IS_COMPATIBLE, true);
+          result.put(CORE_VERSION_RANGE, "No version range available");
+        } else {
+          String coreVersionRange = "[" + fromCore + ", " + latestCore + ")";
+          result.put(CORE_VERSION_RANGE, coreVersionRange);
+
+          boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
+          result.put(IS_COMPATIBLE, isCompatible);
+        }
       } else {
         String coreVersionRange = coreDep.getVersion();
-        result.put(CORE_VERSION_RANGE, coreVersionRange);
 
-        boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
-        result.put(IS_COMPATIBLE, isCompatible);
+        if (StringUtils.isEmpty(coreVersionRange)) {
+          String fromCore = pkgVersion.getFromCore();
+          String latestCore = pkgVersion.getLatestCore();
+
+          if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
+            result.put(IS_COMPATIBLE, true);
+            result.put(CORE_VERSION_RANGE, "No version range available");
+          } else {
+            coreVersionRange = "[" + fromCore + ", " + latestCore + ")";
+            result.put(CORE_VERSION_RANGE, coreVersionRange);
+
+            boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
+            result.put(IS_COMPATIBLE, isCompatible);
+          }
+        } else {
+          result.put(CORE_VERSION_RANGE, coreVersionRange);
+
+          boolean isCompatible = isCompatible(coreVersionRange, currentCoreVersion);
+          result.put(IS_COMPATIBLE, isCompatible);
+        }
       }
     } catch (Exception e) {
       try {
