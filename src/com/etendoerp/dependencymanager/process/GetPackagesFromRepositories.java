@@ -269,25 +269,7 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     String versionName = (String) version.get(NAME);
     PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
 
-    if (pkgVersion.getFromCore() == null || pkgVersion.getLatestCore() == null) {
-      assignCoreVersionFromPrevious(pkgVersion, pkg);
-    }
-
     OBDal.getInstance().save(pkgVersion);
-  }
-
-  private void assignCoreVersionFromPrevious(PackageVersion currentPkgVersion, Package pkg) {
-    List<PackageVersion> previousVersions = OBDal.getInstance()
-      .createQuery(PackageVersion.class, "e where e.package.id = :packageId and e.version < :currentVersion order by e.version desc")
-      .setNamedParameter("packageId", pkg.getId())
-      .setNamedParameter("currentVersion", currentPkgVersion.getVersion())
-      .list();
-
-    if (!previousVersions.isEmpty()) {
-      PackageVersion previousPkgVersion = previousVersions.get(0);
-      currentPkgVersion.setFromCore(previousPkgVersion.getFromCore());
-      currentPkgVersion.setLatestCore(previousPkgVersion.getLatestCore());
-    }
   }
 
   /**
@@ -348,8 +330,6 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
       pkgVersion = new PackageVersion();
       pkgVersion.setPackage(pkg);
       pkgVersion.setVersion(version);
-
-      assignCoreVersionFromPrevious(pkgVersion, pkg);
 
       OBDal.getInstance().save(pkgVersion);
     }
@@ -416,11 +396,6 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
           String groupId = dependency.elementText("groupId");
           String artifactId = dependency.elementText("artifactId");
           String versionDep = dependency.elementText(DependencyManagerConstants.VERSION);
-
-          if (StringUtils.equals(groupId, "com.etendoerp.platform") || StringUtils.equals(artifactId, "etendo-core")) {
-            log.debug("Skipping excluded dependency: groupId={}, artifactId={}", groupId, artifactId);
-            continue;
-          }
 
           findOrCreatePackageDependency(pkgVersion, groupId, artifactId, versionDep);
         }
