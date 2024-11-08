@@ -285,14 +285,6 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
     String versionName = (String) version.get(NAME);
     PackageVersion pkgVersion = findOrCreatePackageVersion(pkg, versionName);
 
-    String coreVersionRange = PackageUtil.findCoreVersions(pkgVersion.getId());
-    if (coreVersionRange != null) {
-      String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(coreVersionRange);
-      pkgVersion.setFromCore(coreVersionSplit[0]);
-      pkgVersion.setLatestCore(coreVersionSplit[1]);
-      OBDal.getInstance().save(pkgVersion);
-    }
-
     if (OBDal.getInstance()
       .createQuery(PackageDependency.class, "e where e.packageVersion.id = :packageVersionId")
       .setNamedParameter("packageVersionId", pkgVersion.getId())
@@ -421,15 +413,21 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
       .setNamedParameter(DependencyManagerConstants.VERSION, version)
       .uniqueResult();
 
-    if (dep == null) {
-      dep = new PackageDependency();
-      dep.setPackageVersion(pkgVersion);
-      dep.setGroup(group);
-      dep.setArtifact(artifact);
-      dep.setVersion(version);
-      dep.setExternalDependency(false);
-      dep.setDependencyVersion(null);
-      if (!StringUtils.equals(PackageUtil.ETENDO_CORE, dep.getArtifact())) {
+    if (dep == null){
+      if (StringUtils.equals(PackageUtil.ETENDO_CORE, artifact))  {
+        String[] coreVersionSplit = PackageUtil.splitCoreVersionRange(version);
+        pkgVersion.setFromCore(coreVersionSplit[0]);
+        pkgVersion.setLatestCore(coreVersionSplit[1]);
+        OBDal.getInstance().save(pkgVersion);
+      }
+      else {
+        dep = new PackageDependency();
+        dep.setPackageVersion(pkgVersion);
+        dep.setGroup(group);
+        dep.setArtifact(artifact);
+        dep.setVersion(version);
+        dep.setExternalDependency(false);
+        dep.setDependencyVersion(null);
         OBCriteria<Package> packageCriteria = OBDal.getInstance().createCriteria(Package.class);
         packageCriteria.add(Restrictions.eq(Package.PROPERTY_ARTIFACT, artifact));
         packageCriteria.add(Restrictions.eq(Package.PROPERTY_GROUP, group));
@@ -447,8 +445,8 @@ public class GetPackagesFromRepositories extends DalBaseProcess {
             dep.setExternalDependency(false);
           }
         }
+        OBDal.getInstance().save(dep);
       }
-      OBDal.getInstance().save(dep);
     }
   }
 

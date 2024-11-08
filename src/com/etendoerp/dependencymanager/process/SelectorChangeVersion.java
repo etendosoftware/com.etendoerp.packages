@@ -117,7 +117,7 @@ public class SelectorChangeVersion extends BaseActionHandler {
    *           <li>In case of an error, includes an "error" field with a description of the issue.</li>
    *         </ul>
    */
-  private JSONObject processCoreDependency(PackageVersion pkgVersion) {
+  private JSONObject processCoreDependency(PackageVersion pkgVersion) throws JSONException {
     JSONObject result = new JSONObject();
     try {
       PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream()
@@ -128,10 +128,10 @@ public class SelectorChangeVersion extends BaseActionHandler {
       String coreVersionRange;
       String updateToCoreVersion;
 
-      if (coreDep == null || StringUtils.isEmpty(coreDep.getVersion())) {
+      if (coreDep == null || StringUtils.isBlank(coreDep.getVersion())) {
         String fromCore = pkgVersion.getFromCore();
         String latestCore = pkgVersion.getLatestCore();
-        if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
+        if (StringUtils.isBlank(fromCore) && StringUtils.isBlank(latestCore)) {
           coreVersionRange = "No version range available";
           updateToCoreVersion = coreVersionRange;
         } else {
@@ -146,11 +146,19 @@ public class SelectorChangeVersion extends BaseActionHandler {
       result.put(CORE_VERSION_RANGE, coreVersionRange);
       result.put(UPDATE_TO_CORE_VERSION, updateToCoreVersion);
 
-    } catch (Exception e) {
+    } catch (NullPointerException e) {
+      log.error("Null pointer exception while processing core dependency", e);
       try {
-        result.put(ERROR, "An error occurred: " + e.getMessage());
+        result.put(ERROR, "Null value encountered: " + e.getMessage());
       } catch (JSONException jsonEx) {
-        log.error("Error creating JSON response", jsonEx);
+        log.error("Error creating JSON response after NullPointerException", jsonEx);
+      }
+    } catch (Exception e) {
+      log.error("An unexpected error occurred while processing core dependency", e);
+      try {
+        result.put(ERROR, "An unexpected error occurred: " + e.getMessage());
+      } catch (JSONException jsonEx) {
+        log.error("Error creating JSON response after Exception", jsonEx);
       }
     }
     return result;

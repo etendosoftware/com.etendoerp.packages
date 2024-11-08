@@ -97,7 +97,7 @@ public class PackageUtil {
     String fromCore = pkgVersion.getFromCore();
     String latestCore = pkgVersion.getLatestCore();
 
-    if (StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore)) {
+    if (StringUtils.isBlank(fromCore) && StringUtils.isBlank(latestCore)) {
       result.put(IS_COMPATIBLE, true);
       result.put(CORE_VERSION_RANGE, "No version range available");
     } else {
@@ -318,21 +318,6 @@ public class PackageUtil {
       throw new IllegalArgumentException(errorMessage);
     }
     return versionSplit;
-  }
-
-  /**
-   * Finds the core version for a specified package version ID.
-   *
-   * @param packageVersionId The package version ID to search for.
-   * @return The core version string or null if not found.
-   */
-  public static String findCoreVersions(String packageVersionId) {
-    OBCriteria<PackageDependency> criteria = OBDal.getInstance().createCriteria(PackageDependency.class);
-    criteria.add(Restrictions.eq(DependencyManagerConstants.ARTIFACT, ETENDO_CORE));
-    criteria.add(Restrictions.eq(PACKAGE_VERSION_ID, packageVersionId));
-    PackageDependency dep = (PackageDependency) criteria.setMaxResults(1).uniqueResult();
-
-    return dep != null ? dep.getVersion() : null;
   }
   
   public static String getCoreCompatibleOrLatestVersion(Package pkg) {
