@@ -1,6 +1,8 @@
 package com.etendoerp.dependencymanager.process;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -34,9 +36,14 @@ import java.util.Set;
 @ApplicationScoped
 public class SelectorChangeVersion extends BaseActionHandler {
   // Constants
+  private static final Logger log = LogManager.getLogger();
   private static final String STATUS = "status";
   private static final String NEW_DEPENDENCY = "[New Dependency]";
   private static final String UPDATED = "[Updated]";
+  private static final String CORE_VERSION_RANGE = "coreVersionRange";
+  private static final String ETENDO_CORE = "etendo-core";
+  private static final String UPDATE_TO_CORE_VERSION = "updateToCoreVersion";
+  private static final String ERROR = "error";
 
   /**
    * Executes the version change operation.
@@ -63,8 +70,14 @@ public class SelectorChangeVersion extends BaseActionHandler {
       PackageVersion updateToPackageVersion = getPackageVersion(depPackage, updateToVersion);
       String currentCoreVersion = OBDal.getInstance().get(Module.class, "0").getVersion();
 
-      PackageDependency updateToEtendoCoreDependency = getEtendoCoreDependency(updateToPackageVersion);
-      // Check if the selected version is not compatible with the current core version
+      JSONObject coreVersionInfo = processCoreDependency(updateToPackageVersion);
+      String coreVersionRange = coreVersionInfo.optString(CORE_VERSION_RANGE);
+      if (coreVersionInfo.has(ERROR)) {
+        jsonResponse.put(ERROR, coreVersionInfo.getString(ERROR));
+        return jsonResponse;
+      }
+
+      // Check core version compatibility
       String fromCore = updateToPackageVersion.getFromCore();
       String latestCore = updateToPackageVersion.getLatestCore();
       if (StringUtils.isEmpty(fromCore) || (!StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore))) {
@@ -72,10 +85,9 @@ public class SelectorChangeVersion extends BaseActionHandler {
       }
       boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, fromCore, latestCore);
       jsonResponse.put("warning", !isCompatible);
-
-      // Include additional compatibility details in the response
       jsonResponse.put("currentCoreVersion", currentCoreVersion);
-      jsonResponse.put("updateToCoreVersion", updateToEtendoCoreDependency != null ? updateToEtendoCoreDependency.getVersion() : "");
+      jsonResponse.put(CORE_VERSION_RANGE, coreVersionRange);
+      jsonResponse.put(UPDATE_TO_CORE_VERSION, coreVersionInfo.optString(UPDATE_TO_CORE_VERSION, ""));
 
       // Compare the package versions and construct the comparison results
       JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
@@ -86,6 +98,70 @@ public class SelectorChangeVersion extends BaseActionHandler {
       OBContext.restorePreviousMode();
     }
     return jsonResponse;
+  }
+
+  /**
+   * Processes core dependency information for the specified package version and returns the results as a JSON object.
+   *
+   * <p>This method checks if a core dependency exists in the package version's dependency list with an artifact
+   * matching the core identifier {@code ETENDO_CORE}. If found, it retrieves the core version range. If no core dependency
+   * is found or if the version is empty, it uses the {@code fromCore} and {@code latestCore} values in the package version
+   * to determine the version range. The method then populates a JSON object with the core version range and
+   * the recommended core update version.</p>
+   *
+   * @param pkgVersion the {@code PackageVersion} object representing the package version containing dependency information
+   * @return a {@code JSONObject} with core dependency details, including:
+   *         <ul>
+   *           <li>{@code CORE_VERSION_RANGE}: The version range for the core dependency if available, otherwise "No version range available".</li>
+   *           <li>{@code UPDATE_TO_CORE_VERSION}: The recommended core update version range if available.</li>
+   *           <li>In case of an error, includes an "error" field with a description of the issue.</li>
+   *         </ul>
+   */
+  private JSONObject processCoreDependency(PackageVersion pkgVersion) throws JSONException {
+    JSONObject result = new JSONObject();
+    try {
+      PackageDependency coreDep = pkgVersion.getETDEPPackageDependencyList().stream()
+              .filter(dep -> StringUtils.equals(ETENDO_CORE, dep.getArtifact()))
+              .findFirst()
+              .orElse(null);
+
+      String coreVersionRange;
+      String updateToCoreVersion;
+
+      if (coreDep == null || StringUtils.isBlank(coreDep.getVersion())) {
+        String fromCore = pkgVersion.getFromCore();
+        String latestCore = pkgVersion.getLatestCore();
+        if (StringUtils.isBlank(fromCore) && StringUtils.isBlank(latestCore)) {
+          coreVersionRange = "No version range available";
+          updateToCoreVersion = coreVersionRange;
+        } else {
+          coreVersionRange = "[" + fromCore + ", " + latestCore + ")";
+          updateToCoreVersion = coreVersionRange;
+        }
+      } else {
+        coreVersionRange = coreDep.getVersion();
+        updateToCoreVersion = coreVersionRange;
+      }
+
+      result.put(CORE_VERSION_RANGE, coreVersionRange);
+      result.put(UPDATE_TO_CORE_VERSION, updateToCoreVersion);
+
+    } catch (NullPointerException e) {
+      log.error("Null pointer exception while processing core dependency", e);
+      try {
+        result.put(ERROR, "Null value encountered: " + e.getMessage());
+      } catch (JSONException jsonEx) {
+        log.error("Error creating JSON response after NullPointerException", jsonEx);
+      }
+    } catch (Exception e) {
+      log.error("An unexpected error occurred while processing core dependency", e);
+      try {
+        result.put(ERROR, "An unexpected error occurred: " + e.getMessage());
+      } catch (JSONException jsonEx) {
+        log.error("Error creating JSON response after Exception", jsonEx);
+      }
+    }
+    return result;
   }
 
   /**
