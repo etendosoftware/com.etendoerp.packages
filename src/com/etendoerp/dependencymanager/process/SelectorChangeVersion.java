@@ -80,18 +80,17 @@ public class SelectorChangeVersion extends BaseActionHandler {
       // Check core version compatibility
       String fromCore = updateToPackageVersion.getFromCore();
       String latestCore = updateToPackageVersion.getLatestCore();
-      if (StringUtils.isEmpty(fromCore) || (!StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore))) {
-        throw new OBException(OBMessageUtils.messageBD("ETDEP_Core_Version_Not_Found"));
-      }
-      boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, fromCore, latestCore);
-      jsonResponse.put("warning", !isCompatible);
-      jsonResponse.put("currentCoreVersion", currentCoreVersion);
-      jsonResponse.put(CORE_VERSION_RANGE, coreVersionRange);
-      jsonResponse.put(UPDATE_TO_CORE_VERSION, coreVersionInfo.optString(UPDATE_TO_CORE_VERSION, ""));
+      if (!StringUtils.isEmpty(fromCore) && !StringUtils.isEmpty(latestCore)) {
+        boolean isCompatible = isCoreVersionCompatible(currentCoreVersion, fromCore, latestCore);
+        jsonResponse.put("warning", !isCompatible);
+        jsonResponse.put("currentCoreVersion", currentCoreVersion);
+        jsonResponse.put(CORE_VERSION_RANGE, coreVersionRange);
+        jsonResponse.put(UPDATE_TO_CORE_VERSION, coreVersionInfo.optString(UPDATE_TO_CORE_VERSION, ""));
 
-      // Compare the package versions and construct the comparison results
-      JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
-      jsonResponse.put("comparison", dependenciesComparison);
+        // Compare the package versions and construct the comparison results
+        JSONArray dependenciesComparison = comparePackageVersions(depPackage, currentVersion, updateToVersion);
+        jsonResponse.put("comparison", dependenciesComparison);
+      }
     } catch (JSONException e) {
       throw new OBException(OBMessageUtils.messageBD("ETDEP_Error_Updating_Dependency_Version"), e);
     } finally {
@@ -209,13 +208,6 @@ public class SelectorChangeVersion extends BaseActionHandler {
     PackageVersion packageVersion = (PackageVersion) packageVersionCriteria.uniqueResult();
 
     if (packageVersion != null) {
-      String fromCore = packageVersion.getFromCore();
-      String latestCore = packageVersion.getLatestCore();
-
-      if (StringUtils.isEmpty(fromCore) || (!StringUtils.isEmpty(fromCore) && StringUtils.isEmpty(latestCore))) {
-        throw new OBException(OBMessageUtils.messageBD("ETDEP_Invalid_Core_Versions") + version);
-      }
-
       List<PackageDependency> dependencies = packageVersion.getETDEPPackageDependencyList();
       for (PackageDependency dep : dependencies) {
         String key = dep.getGroup() + ":" + dep.getArtifact();
