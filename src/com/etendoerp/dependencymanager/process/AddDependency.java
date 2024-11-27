@@ -333,7 +333,7 @@ public class AddDependency extends BaseActionHandler {
             group + "." + artifact);
         result.put(MESSAGE, message);
       } else {
-        if (PackageUtil.compareVersions(packageDependency.getVersion(), installedModule.getVersion()) > 0) {
+        if (PackageUtil.compareVersions(packageDependency.getVersion(), installedModule.getVersion()) >= 0) {
           updateExistingDependency(existingDependency, packageDependency, packageVersion);
           result.put(NEED_FLUSH, true);
         } else {
